@@ -1,5 +1,5 @@
-import { Composition } from 'remotion';
-import { VideoComposition } from './VideoComposition';
+import { Composition } from "remotion";
+import { VideoComposition } from "./VideoComposition";
 
 // This will be dynamically configured based on slides
 export const RemotionRoot: React.FC = () => {

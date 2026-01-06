@@ -1,6 +1,6 @@
-import type { Slide } from '@/types';
-import { COLLAGE_LAYOUTS } from '@/data/layouts';
-import { generateId } from './photoUtils';
+import type { Slide } from "@/types";
+import { COLLAGE_LAYOUTS } from "@/data/layouts";
+import { generateId } from "./photoUtils";
 
 /**
  * Split slides when changing to a layout with fewer photo slots
@@ -18,13 +18,13 @@ export function splitSlidesForLayout(
   const newSlides: Slide[] = [];
 
   for (const slide of slides) {
-    const currentPhotos = slide.photoIds.filter(id => id && id !== '');
+    const currentPhotos = slide.photoIds.filter((id) => id && id !== "");
 
     // If photos fit in new layout or fewer, update in place
     if (currentPhotos.length <= newLayout.photoCount) {
       const paddedPhotoIds = [...currentPhotos];
       while (paddedPhotoIds.length < newLayout.photoCount) {
-        paddedPhotoIds.push('');
+        paddedPhotoIds.push("");
       }
       newSlides.push({
         ...slide,
@@ -42,13 +42,13 @@ export function splitSlidesForLayout(
         // Pad chunk with empty strings if needed
         const paddedChunk = [...chunk];
         while (paddedChunk.length < newLayout.photoCount) {
-          paddedChunk.push('');
+          paddedChunk.push("");
         }
 
         // Find matching layout or use the new layout
-        const matchingLayout = COLLAGE_LAYOUTS.find(
-          (l) => l.photoCount === chunk.length
-        ) || newLayout;
+        const matchingLayout =
+          COLLAGE_LAYOUTS.find((l) => l.photoCount === chunk.length) ||
+          newLayout;
 
         newSlides.push({
           ...slide,

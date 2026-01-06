@@ -10,12 +10,12 @@ export function MainLayout({ timeline, editor, preview }: MainLayoutProps) {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* Timeline Sidebar - Left */}
-      <div className="w-64 border-r bg-muted/30 overflow-y-auto flex-shrink-0">
+      <div className="bg-muted/30 w-64 flex-shrink-0 overflow-y-auto border-r">
         {timeline}
       </div>
 
       {/* Editor - Right */}
-      <div className="w-96 border-r bg-muted/30 overflow-y-auto flex-shrink-0">
+      <div className="bg-muted/30 w-96 flex-shrink-0 overflow-y-auto border-r">
         {editor}
       </div>
 

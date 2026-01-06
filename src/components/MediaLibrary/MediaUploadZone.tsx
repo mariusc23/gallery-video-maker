@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
-import { Upload } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useGalleryStore } from '@/store/useGalleryStore';
+import { useRef, useState } from "react";
+import { Upload } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useGalleryStore } from "@/store/useGalleryStore";
 
 interface MediaUploadZoneProps {
   onPhotosUploaded?: (photoIds: string[]) => void;
@@ -35,7 +35,7 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
     setIsDragActive(false);
 
     const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith('image/')
+      file.type.startsWith("image/")
     );
 
     if (files.length > 0) {
@@ -50,7 +50,7 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
       const newPhotoIds = await addPhotos(Array.from(files));
       onPhotosUploaded?.(newPhotoIds);
       // Reset input so the same files can be selected again if needed
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
@@ -66,10 +66,10 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
       onDrop={handleDrop}
       onClick={handleClick}
       className={cn(
-        'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+        "cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors",
         isDragActive
-          ? 'border-primary bg-primary/10'
-          : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+          ? "border-primary bg-primary/10"
+          : "border-muted-foreground/25 hover:border-muted-foreground/50"
       )}
     >
       <input
@@ -80,15 +80,15 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
         onChange={handleFileInput}
         className="hidden"
       />
-      <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+      <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
       {isDragActive ? (
         <p className="text-sm font-medium">Drop images here...</p>
       ) : (
         <>
-          <p className="text-sm font-medium mb-1">
+          <p className="mb-1 text-sm font-medium">
             Drag & drop images here, or click to select
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             PNG, JPG, GIF, WEBP supported
           </p>
         </>

@@ -31,7 +31,14 @@ import {
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import { BatchEditPanel } from "./BatchEditPanel";
 import { CropPositionEditor } from "./CropPositionEditor";
-import { X, ImagePlus, GripVertical, Maximize, Crop, Trash2 } from "lucide-react";
+import {
+  X,
+  ImagePlus,
+  GripVertical,
+  Maximize,
+  Crop,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TransitionType, SlotCropConfig } from "@/types";
 import { DEFAULT_SLOT_CROP } from "@/types";
@@ -61,10 +68,16 @@ export function SlideEditor() {
   const [photoPickerSlotIndex, setPhotoPickerSlotIndex] = useState<
     number | null
   >(null);
-  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
-  const [dropTargetPhotoIndex, setDropTargetPhotoIndex] = useState<number | null>(null);
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(
+    null
+  );
+  const [dropTargetPhotoIndex, setDropTargetPhotoIndex] = useState<
+    number | null
+  >(null);
   const [cropEditorOpen, setCropEditorOpen] = useState(false);
-  const [cropEditorSlotIndex, setCropEditorSlotIndex] = useState<number | null>(null);
+  const [cropEditorSlotIndex, setCropEditorSlotIndex] = useState<number | null>(
+    null
+  );
 
   const photoList = Object.values(photos);
 
@@ -75,9 +88,9 @@ export function SlideEditor() {
 
   if (!currentSlide) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <p className="text-lg font-medium mb-2">No slide selected</p>
+      <div className="flex h-full items-center justify-center">
+        <div className="text-muted-foreground text-center">
+          <p className="mb-2 text-lg font-medium">No slide selected</p>
           <p className="text-sm">
             Select a slide from the timeline to edit its properties
           </p>
@@ -152,7 +165,7 @@ export function SlideEditor() {
 
   const handleToggleObjectFit = (slotIndex: number) => {
     const currentConfig = getSlotCropConfig(currentSlide.slotCrops, slotIndex);
-    const newFit = currentConfig.objectFit === 'cover' ? 'contain' : 'cover';
+    const newFit = currentConfig.objectFit === "cover" ? "contain" : "cover";
     updateSlotCrop(currentSlide.id, slotIndex, { objectFit: newFit });
   };
 
@@ -169,13 +182,13 @@ export function SlideEditor() {
 
   const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
     setDraggedPhotoIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
   };
 
   const handlePhotoDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
     setDropTargetPhotoIndex(index);
   };
 
@@ -197,7 +210,9 @@ export function SlideEditor() {
       // Also swap the crop configs if they exist
       const newSlotCrops = currentSlide.slotCrops
         ? [...currentSlide.slotCrops]
-        : Array(currentSlide.photoIds.length).fill(null).map(() => ({ ...DEFAULT_SLOT_CROP }));
+        : Array(currentSlide.photoIds.length)
+            .fill(null)
+            .map(() => ({ ...DEFAULT_SLOT_CROP }));
 
       // Ensure array is long enough
       while (newSlotCrops.length <= Math.max(sourceIndex, targetIndex)) {
@@ -208,7 +223,10 @@ export function SlideEditor() {
       newSlotCrops[sourceIndex] = newSlotCrops[targetIndex];
       newSlotCrops[targetIndex] = tempCrop;
 
-      updateSlide(currentSlide.id, { photoIds: newPhotoIds, slotCrops: newSlotCrops });
+      updateSlide(currentSlide.id, {
+        photoIds: newPhotoIds,
+        slotCrops: newSlotCrops,
+      });
     }
 
     setDraggedPhotoIndex(null);
@@ -227,10 +245,10 @@ export function SlideEditor() {
   const layout = COLLAGE_LAYOUTS.find((l) => l.id === currentSlide.layoutId);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div>
-        <h2 className="text-lg font-semibold mb-1">Slide Editor</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="mb-1 text-lg font-semibold">Slide Editor</h2>
+        <p className="text-muted-foreground text-sm">
           {layout?.name || "Unknown Layout"}
         </p>
       </div>
@@ -238,19 +256,23 @@ export function SlideEditor() {
       {/* Layout Control */}
       <div className="space-y-2">
         <Label>Layout</Label>
-        <Select value={currentSlide.layoutId} onValueChange={handleLayoutChange}>
+        <Select
+          value={currentSlide.layoutId}
+          onValueChange={handleLayoutChange}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {COLLAGE_LAYOUTS.map((layout) => (
               <SelectItem key={layout.id} value={layout.id}>
-                {layout.name} ({layout.photoCount} {layout.photoCount === 1 ? 'photo' : 'photos'})
+                {layout.name} ({layout.photoCount}{" "}
+                {layout.photoCount === 1 ? "photo" : "photos"})
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Choose slide layout pattern
         </p>
       </div>
@@ -258,11 +280,16 @@ export function SlideEditor() {
       {/* Photo Selection */}
       <div className="space-y-2">
         <Label>Photos</Label>
-        <div className={currentSlide.photoIds.length === 1 ? "" : "grid grid-cols-2 gap-2"}>
+        <div
+          className={
+            currentSlide.photoIds.length === 1 ? "" : "grid grid-cols-2 gap-2"
+          }
+        >
           {currentSlide.photoIds.map((photoId, index) => {
             const isDragging = draggedPhotoIndex === index;
             const isDropTarget = dropTargetPhotoIndex === index;
-            const canDrag = currentSlide.photoIds.length > 1 && photoId && photos[photoId];
+            const canDrag =
+              currentSlide.photoIds.length > 1 && photoId && photos[photoId];
             const cropConfig = getSlotCropConfig(currentSlide.slotCrops, index);
             const photo = photoId ? photos[photoId] : null;
 
@@ -270,16 +297,20 @@ export function SlideEditor() {
               <div key={index} className="space-y-1">
                 <div
                   draggable={!!canDrag}
-                  onDragStart={canDrag ? (e) => handlePhotoDragStart(e, index) : undefined}
+                  onDragStart={
+                    canDrag ? (e) => handlePhotoDragStart(e, index) : undefined
+                  }
                   onDragOver={(e) => handlePhotoDragOver(e, index)}
                   onDragLeave={handlePhotoDragLeave}
                   onDrop={(e) => handlePhotoDrop(e, index)}
                   onDragEnd={handlePhotoDragEnd}
                   className={cn(
-                    `relative ${currentSlide.photoIds.length === 1 ? 'aspect-video' : 'aspect-square'} rounded-lg overflow-hidden border-2 transition-colors group`,
-                    isDropTarget && draggedPhotoIndex !== index ? 'border-primary border-dashed' : 'border-dashed border-muted-foreground/50',
-                    !isDragging && 'hover:border-primary',
-                    isDragging && 'opacity-50'
+                    `relative ${currentSlide.photoIds.length === 1 ? "aspect-video" : "aspect-square"} group overflow-hidden rounded-lg border-2 transition-colors`,
+                    isDropTarget && draggedPhotoIndex !== index
+                      ? "border-primary border-dashed"
+                      : "border-muted-foreground/50 border-dashed",
+                    !isDragging && "hover:border-primary",
+                    isDragging && "opacity-50"
                   )}
                 >
                   {photo ? (
@@ -287,7 +318,7 @@ export function SlideEditor() {
                       <img
                         src={photo.thumbnail}
                         alt=""
-                        className="w-full h-full object-cover cursor-pointer"
+                        className="h-full w-full cursor-pointer object-cover"
                         onClick={() => handleOpenPhotoPicker(index)}
                       />
                       {currentSlide.photoIds.length > 1 && (
@@ -297,28 +328,36 @@ export function SlideEditor() {
                               e.stopPropagation();
                               handleRemovePhoto(index);
                             }}
-                            className="absolute top-1 right-1 z-10 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="bg-destructive text-destructive-foreground absolute top-1 right-1 z-10 rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100"
                           >
                             <X className="h-3 w-3 text-white" />
                           </button>
-                          <div className="absolute top-1 left-1 z-10 bg-black/50 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                          <div className="absolute top-1 left-1 z-10 cursor-grab rounded bg-black/50 p-0.5 opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing">
                             <GripVertical className="h-3 w-3 text-white" />
                           </div>
                         </>
                       )}
                       <div
                         onClick={() => handleOpenPhotoPicker(index)}
-                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                        className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <ImagePlus className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`} />
+                        <ImagePlus
+                          className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`}
+                        />
                       </div>
                     </>
                   ) : (
                     <div
                       onClick={() => handleOpenPhotoPicker(index)}
-                      className="w-full h-full flex items-center justify-center text-muted-foreground cursor-pointer"
+                      className="text-muted-foreground flex h-full w-full cursor-pointer items-center justify-center"
                     >
-                      <ImagePlus className={currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} />
+                      <ImagePlus
+                        className={
+                          currentSlide.photoIds.length === 1
+                            ? "h-8 w-8"
+                            : "h-6 w-6"
+                        }
+                      />
                     </div>
                   )}
                 </div>
@@ -328,21 +367,31 @@ export function SlideEditor() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 h-7 text-xs"
+                      className="h-7 flex-1 text-xs"
                       onClick={() => handleToggleObjectFit(index)}
-                      title={cropConfig.objectFit === 'cover' ? 'Switch to Contain (show full image)' : 'Switch to Cover (fill slot)'}
+                      title={
+                        cropConfig.objectFit === "cover"
+                          ? "Switch to Contain (show full image)"
+                          : "Switch to Cover (fill slot)"
+                      }
                     >
-                      {cropConfig.objectFit === 'cover' ? (
-                        <><Crop className="h-3 w-3 mr-1" />Cover</>
+                      {cropConfig.objectFit === "cover" ? (
+                        <>
+                          <Crop className="mr-1 h-3 w-3" />
+                          Cover
+                        </>
                       ) : (
-                        <><Maximize className="h-3 w-3 mr-1" />Contain</>
+                        <>
+                          <Maximize className="mr-1 h-3 w-3" />
+                          Contain
+                        </>
                       )}
                     </Button>
-                    {cropConfig.objectFit === 'cover' && (
+                    {cropConfig.objectFit === "cover" && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs px-2"
+                        className="h-7 px-2 text-xs"
                         onClick={() => handleOpenCropEditor(index)}
                         title="Adjust crop position"
                       >
@@ -355,14 +404,16 @@ export function SlideEditor() {
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground">Click to change photos, drag to reorder</p>
+        <p className="text-muted-foreground text-xs">
+          Click to change photos, drag to reorder
+        </p>
       </div>
 
       {/* Duration Control */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Duration</Label>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {durationInSeconds.toFixed(1)}s
           </span>
         </div>
@@ -373,7 +424,7 @@ export function SlideEditor() {
           max={10}
           step={0.5}
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           1 to 10 seconds per slide
         </p>
       </div>
@@ -399,11 +450,11 @@ export function SlideEditor() {
       </div>
 
       {/* Delete Slide */}
-      <div className="pt-4 border-t">
+      <div className="border-t pt-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="w-full">
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete Slide
             </Button>
           </AlertDialogTrigger>
@@ -411,7 +462,8 @@ export function SlideEditor() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Slide</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this slide? This action cannot be undone.
+                Are you sure you want to delete this slide? This action cannot
+                be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -429,31 +481,31 @@ export function SlideEditor() {
 
       {/* Photo Picker Dialog */}
       <Dialog open={photoPickerOpen} onOpenChange={setPhotoPickerOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Select Photo</DialogTitle>
             <DialogDescription>Choose a photo for this slot</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-4 gap-4 mt-4">
+          <div className="mt-4 grid grid-cols-4 gap-4">
             {photoList.map((photo) => (
               <div
                 key={photo.id}
                 onClick={() => handleSelectPhoto(photo.id)}
                 className={cn(
-                  "relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all",
-                  "border-transparent hover:border-primary"
+                  "relative aspect-square cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
+                  "hover:border-primary border-transparent"
                 )}
               >
                 <img
                   src={photo.thumbnail}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
             ))}
           </div>
           {photoList.length === 0 && (
-            <div className="text-center text-sm text-muted-foreground py-8">
+            <div className="text-muted-foreground py-8 text-center text-sm">
               No photos available
             </div>
           )}
@@ -461,22 +513,29 @@ export function SlideEditor() {
       </Dialog>
 
       {/* Crop Position Editor Dialog */}
-      {cropEditorSlotIndex !== null && currentSlide.photoIds[cropEditorSlotIndex] && photos[currentSlide.photoIds[cropEditorSlotIndex]] && (
-        <CropPositionEditor
-          open={cropEditorOpen}
-          onOpenChange={setCropEditorOpen}
-          photo={photos[currentSlide.photoIds[cropEditorSlotIndex]]}
-          cropConfig={getSlotCropConfig(currentSlide.slotCrops, cropEditorSlotIndex)}
-          slotAspect={(() => {
-            const currentLayout = COLLAGE_LAYOUTS.find((l) => l.id === currentSlide.layoutId);
-            if (!currentLayout) return 16 / 9;
-            const slot = currentLayout.slots[cropEditorSlotIndex];
-            if (!slot) return 16 / 9;
-            return (slot.width / slot.height) * (16 / 9);
-          })()}
-          onUpdate={handleCropUpdate}
-        />
-      )}
+      {cropEditorSlotIndex !== null &&
+        currentSlide.photoIds[cropEditorSlotIndex] &&
+        photos[currentSlide.photoIds[cropEditorSlotIndex]] && (
+          <CropPositionEditor
+            open={cropEditorOpen}
+            onOpenChange={setCropEditorOpen}
+            photo={photos[currentSlide.photoIds[cropEditorSlotIndex]]}
+            cropConfig={getSlotCropConfig(
+              currentSlide.slotCrops,
+              cropEditorSlotIndex
+            )}
+            slotAspect={(() => {
+              const currentLayout = COLLAGE_LAYOUTS.find(
+                (l) => l.id === currentSlide.layoutId
+              );
+              if (!currentLayout) return 16 / 9;
+              const slot = currentLayout.slots[cropEditorSlotIndex];
+              if (!slot) return 16 / 9;
+              return (slot.width / slot.height) * (16 / 9);
+            })()}
+            onUpdate={handleCropUpdate}
+          />
+        )}
     </div>
   );
 }

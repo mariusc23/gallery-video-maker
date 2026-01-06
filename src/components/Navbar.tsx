@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { Images, Download } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Images, Download } from "lucide-react";
 
 interface NavbarProps {
   onOpenMediaLibrary: () => void;
@@ -8,8 +8,8 @@ interface NavbarProps {
 
 export function Navbar({ onOpenMediaLibrary, onExport }: NavbarProps) {
   return (
-    <nav className="border-b bg-background">
-      <div className="flex h-14 items-center px-4 gap-4">
+    <nav className="bg-background border-b">
+      <div className="flex h-14 items-center gap-4 px-4">
         <h1 className="text-lg font-semibold">Gallery Video Maker</h1>
         <div className="ml-auto flex gap-2">
           <Button onClick={onOpenMediaLibrary} variant="outline">

@@ -1,5 +1,5 @@
-import type { Slide, CollageLayout, TransitionType } from '@/types';
-import type { CanvasRenderer } from './CanvasRenderer';
+import type { Slide, CollageLayout, TransitionType } from "@/types";
+import type { CanvasRenderer } from "./CanvasRenderer";
 
 export interface TransitionContext {
   ctx: CanvasRenderingContext2D;
@@ -20,7 +20,14 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     renderer.getContext().drawImage(canvas, 0, 0);
   },
 
-  fade: ({ ctx, renderer, outgoingSlide, incomingSlide, layouts, progress }) => {
+  fade: ({
+    ctx,
+    renderer,
+    outgoingSlide,
+    incomingSlide,
+    layouts,
+    progress,
+  }) => {
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
     const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
 
@@ -33,12 +40,21 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     ctx.globalAlpha = 1;
   },
 
-  slide: ({ ctx, renderer, outgoingSlide, incomingSlide, layouts, progress, width, height }) => {
+  slide: ({
+    ctx,
+    renderer,
+    outgoingSlide,
+    incomingSlide,
+    layouts,
+    progress,
+    width,
+    height,
+  }) => {
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
     const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
 
     // Clear
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, width, height);
 
     // Outgoing slides left
@@ -48,12 +64,21 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     ctx.drawImage(incomingCanvas, width * (1 - progress), 0);
   },
 
-  zoom: ({ ctx, renderer, outgoingSlide, incomingSlide, layouts, progress, width, height }) => {
+  zoom: ({
+    ctx,
+    renderer,
+    outgoingSlide,
+    incomingSlide,
+    layouts,
+    progress,
+    width,
+    height,
+  }) => {
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
     const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
 
     // Clear
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, width, height);
 
     // Outgoing zooms out and fades
@@ -78,12 +103,21 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     ctx.globalAlpha = 1;
   },
 
-  rotate: ({ ctx, renderer, outgoingSlide, incomingSlide, layouts, progress, width, height }) => {
+  rotate: ({
+    ctx,
+    renderer,
+    outgoingSlide,
+    incomingSlide,
+    layouts,
+    progress,
+    width,
+    height,
+  }) => {
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
     const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
 
     // Clear
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, width, height);
 
     // Outgoing rotates out
@@ -106,15 +140,24 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     ctx.globalAlpha = 1;
   },
 
-  blur: ({ ctx, renderer, outgoingSlide, incomingSlide, layouts, progress, width, height }) => {
+  blur: ({
+    ctx,
+    renderer,
+    outgoingSlide,
+    incomingSlide,
+    layouts,
+    progress,
+    width,
+    height,
+  }) => {
     // Note: Canvas blur filter has limited browser support
-    const supportsFilter = typeof ctx.filter !== 'undefined';
+    const supportsFilter = typeof ctx.filter !== "undefined";
 
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
     const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
 
     // Clear
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, width, height);
 
     if (!supportsFilter) {
@@ -140,16 +183,25 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     ctx.drawImage(incomingCanvas, 0, 0);
     ctx.restore();
     ctx.globalAlpha = 1;
-    ctx.filter = 'none';
+    ctx.filter = "none";
   },
 
-  kenBurns: ({ ctx, renderer, outgoingSlide, incomingSlide, layouts, progress, width, height }) => {
+  kenBurns: ({
+    ctx,
+    renderer,
+    outgoingSlide,
+    incomingSlide,
+    layouts,
+    progress,
+    width,
+    height,
+  }) => {
     // Ken Burns: slow zoom crossfade
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
     const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
 
     // Clear
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, width, height);
 
     // Outgoing with slight zoom
@@ -175,7 +227,10 @@ const transitions: Record<TransitionType, TransitionFunction> = {
   },
 };
 
-export function renderTransitionFrame(type: TransitionType, context: TransitionContext): void {
+export function renderTransitionFrame(
+  type: TransitionType,
+  context: TransitionContext
+): void {
   const transitionFn = transitions[type] || transitions.none;
   transitionFn(context);
 }

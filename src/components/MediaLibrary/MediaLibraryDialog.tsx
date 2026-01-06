@@ -161,7 +161,7 @@ export function MediaLibraryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
           <DialogDescription>
@@ -178,7 +178,7 @@ export function MediaLibraryDialog({
           />
 
           {selectedPhotoIds.size > 0 && (
-            <div className="border-t pt-4 space-y-4">
+            <div className="space-y-4 border-t pt-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm">
                   {selectedPhotoIds.size} photo
@@ -214,7 +214,7 @@ export function MediaLibraryDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {selectedLayoutId === "auto"
                       ? "Landscape photos get single slides, portraits are paired side by side"
                       : "Photos will be divided into multiple slides based on the layout"}
@@ -238,7 +238,7 @@ export function MediaLibraryDialog({
                 )}
               </div>
               {selectedSlideIds.size > 0 && !hasEmptySlots && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-muted-foreground text-center text-xs">
                   Selected slides have no empty slots
                 </p>
               )}

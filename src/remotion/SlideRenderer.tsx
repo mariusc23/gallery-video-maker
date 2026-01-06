@@ -1,5 +1,5 @@
-import type { Slide } from '@/types';
-import { CollageSlide } from './slides/CollageSlide';
+import type { Slide } from "@/types";
+import { CollageSlide } from "./slides/CollageSlide";
 
 interface SlideRendererProps {
   slide: Slide;

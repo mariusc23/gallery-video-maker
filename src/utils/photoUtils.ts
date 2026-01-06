@@ -1,5 +1,5 @@
-import type { Photo } from '@/types';
-import { detectFaceCenter } from './faceDetection';
+import type { Photo } from "@/types";
+import { detectFaceCenter } from "./faceDetection";
 
 /**
  * Generate a unique ID for photos and slides
@@ -30,11 +30,11 @@ async function createThumbnail(
   img: HTMLImageElement,
   maxSize: number = 200
 ): Promise<string> {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    throw new Error('Failed to get canvas context');
+    throw new Error("Failed to get canvas context");
   }
 
   const scale = Math.min(maxSize / img.width, maxSize / img.height);
@@ -42,7 +42,7 @@ async function createThumbnail(
   canvas.height = img.height * scale;
 
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.7);
+  return canvas.toDataURL("image/jpeg", 0.7);
 }
 
 /**

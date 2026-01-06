@@ -1,13 +1,13 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import type { Photo, SlotCropConfig } from '@/types';
-import { clampOffset } from '@/utils/cropUtils';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import type { Photo, SlotCropConfig } from "@/types";
+import { clampOffset } from "@/utils/cropUtils";
 
 interface CropPositionEditorProps {
   open: boolean;
@@ -28,7 +28,10 @@ export function CropPositionEditor({
 }: CropPositionEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [localOffset, setLocalOffset] = useState({ x: cropConfig.offsetX, y: cropConfig.offsetY });
+  const [localOffset, setLocalOffset] = useState({
+    x: cropConfig.offsetX,
+    y: cropConfig.offsetY,
+  });
 
   // Reset local offset when crop config changes
   useEffect(() => {
@@ -40,31 +43,37 @@ export function CropPositionEditor({
   const canPanX = photoAspect > slotAspect;
   const canPanY = photoAspect < slotAspect;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (cropConfig.objectFit === 'contain') return;
-    e.preventDefault();
-    setIsDragging(true);
-  }, [cropConfig.objectFit]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (cropConfig.objectFit === "contain") return;
+      e.preventDefault();
+      setIsDragging(true);
+    },
+    [cropConfig.objectFit]
+  );
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
 
-    const sensitivity = 0.01;
+      const sensitivity = 0.01;
 
-    setLocalOffset((prev) => {
-      let newX = prev.x;
-      let newY = prev.y;
+      setLocalOffset((prev) => {
+        let newX = prev.x;
+        let newY = prev.y;
 
-      if (canPanX) {
-        newX = clampOffset(prev.x - e.movementX * sensitivity);
-      }
-      if (canPanY) {
-        newY = clampOffset(prev.y - e.movementY * sensitivity);
-      }
+        if (canPanX) {
+          newX = clampOffset(prev.x - e.movementX * sensitivity);
+        }
+        if (canPanY) {
+          newY = clampOffset(prev.y - e.movementY * sensitivity);
+        }
 
-      return { x: newX, y: newY };
-    });
-  }, [isDragging, canPanX, canPanY]);
+        return { x: newX, y: newY };
+      });
+    },
+    [isDragging, canPanX, canPanY]
+  );
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -75,11 +84,11 @@ export function CropPositionEditor({
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
       return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
@@ -91,11 +100,11 @@ export function CropPositionEditor({
 
   // Calculate preview styles
   const getPreviewStyles = (): React.CSSProperties => {
-    if (cropConfig.objectFit === 'contain') {
+    if (cropConfig.objectFit === "contain") {
       return {
-        width: '100%',
-        height: '100%',
-        objectFit: 'contain',
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
       };
     }
 
@@ -103,14 +112,14 @@ export function CropPositionEditor({
     const posY = 50 + localOffset.y * 50;
 
     return {
-      width: '100%',
-      height: '100%',
-      objectFit: 'cover',
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
       objectPosition: `${posX}% ${posY}%`,
     };
   };
 
-  const canDrag = cropConfig.objectFit === 'cover' && (canPanX || canPanY);
+  const canDrag = cropConfig.objectFit === "cover" && (canPanX || canPanY);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,7 +132,7 @@ export function CropPositionEditor({
           {/* Preview */}
           <div
             ref={containerRef}
-            className="relative w-full bg-black rounded-lg overflow-hidden"
+            className="relative w-full overflow-hidden rounded-lg bg-black"
             style={{ aspectRatio: slotAspect }}
             onMouseDown={handleMouseDown}
           >
@@ -132,13 +141,13 @@ export function CropPositionEditor({
               alt=""
               draggable={false}
               style={getPreviewStyles()}
-              className={canDrag ? 'cursor-move' : ''}
+              className={canDrag ? "cursor-move" : ""}
             />
 
             {/* Drag hint overlay */}
             {canDrag && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-black/50 text-white text-sm px-3 py-1 rounded-full">
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="rounded-full bg-black/50 px-3 py-1 text-sm text-white">
                   Drag to adjust
                 </div>
               </div>
@@ -146,14 +155,17 @@ export function CropPositionEditor({
           </div>
 
           {/* Info */}
-          <div className="text-sm text-muted-foreground">
-            {cropConfig.objectFit === 'contain' ? (
-              <p>The full image is shown. Switch to Cover mode to enable cropping.</p>
+          <div className="text-muted-foreground text-sm">
+            {cropConfig.objectFit === "contain" ? (
+              <p>
+                The full image is shown. Switch to Cover mode to enable
+                cropping.
+              </p>
             ) : canDrag ? (
               <p>
                 Drag the image to adjust which part is visible.
-                {canPanX && ' Pan left/right.'}
-                {canPanY && ' Pan up/down.'}
+                {canPanX && " Pan left/right."}
+                {canPanY && " Pan up/down."}
               </p>
             ) : (
               <p>This image fits the slot perfectly - no adjustment needed.</p>
@@ -165,13 +177,14 @@ export function CropPositionEditor({
             <Button
               variant="outline"
               onClick={handleReset}
-              disabled={cropConfig.objectFit === 'contain' || (localOffset.x === 0 && localOffset.y === 0)}
+              disabled={
+                cropConfig.objectFit === "contain" ||
+                (localOffset.x === 0 && localOffset.y === 0)
+              }
             >
               Reset to Center
             </Button>
-            <Button onClick={() => onOpenChange(false)}>
-              Done
-            </Button>
+            <Button onClick={() => onOpenChange(false)}>Done</Button>
           </div>
         </div>
       </DialogContent>

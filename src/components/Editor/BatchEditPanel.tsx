@@ -92,10 +92,10 @@ export function BatchEditPanel() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div>
-        <h2 className="text-lg font-semibold mb-1">Batch Edit</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="mb-1 text-lg font-semibold">Batch Edit</h2>
+        <p className="text-muted-foreground text-sm">
           Editing {selectedSlideIds.size} slide
           {selectedSlideIds.size === 1 ? "" : "s"}
         </p>
@@ -117,7 +117,7 @@ export function BatchEditPanel() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Photos will be redistributed across slides to fill all available slots
         </p>
       </div>
@@ -127,7 +127,7 @@ export function BatchEditPanel() {
         <div className="flex items-center justify-between">
           <Label>Duration</Label>
           {duration !== null && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {duration.toFixed(1)}s
             </span>
           )}
@@ -139,7 +139,7 @@ export function BatchEditPanel() {
           max={10}
           step={0.5}
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {duration === null
             ? "Leave unchanged"
             : "Apply to all selected slides"}
@@ -177,12 +177,13 @@ export function BatchEditPanel() {
       </div>
 
       {/* Delete Button */}
-      <div className="pt-4 border-t">
+      <div className="border-t pt-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="w-full">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete {selectedSlideIds.size} Slide{selectedSlideIds.size === 1 ? "" : "s"}
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete {selectedSlideIds.size} Slide
+              {selectedSlideIds.size === 1 ? "" : "s"}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -190,7 +191,8 @@ export function BatchEditPanel() {
               <AlertDialogTitle>Delete Slides</AlertDialogTitle>
               <AlertDialogDescription>
                 Are you sure you want to delete {selectedSlideIds.size} slide
-                {selectedSlideIds.size === 1 ? "" : "s"}? This action cannot be undone.
+                {selectedSlideIds.size === 1 ? "" : "s"}? This action cannot be
+                undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

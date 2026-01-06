@@ -164,7 +164,7 @@ export function TimelineSidebar({
   return (
     <div
       className={cn(
-        "p-4 h-full flex flex-col transition-colors",
+        "flex h-full flex-col p-4 transition-colors",
         isFileDragOver && "bg-primary/10"
       )}
       onDragOver={handleFileDragOver}
@@ -173,14 +173,14 @@ export function TimelineSidebar({
     >
       <div className="mb-4">
         <h2 className="text-sm font-semibold">Timeline</h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {slides.length} {slides.length === 1 ? "slide" : "slides"}
         </p>
       </div>
 
       <div className="flex-1 space-y-2">
         {slides.length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground py-8">
+          <div className="text-muted-foreground py-8 text-center text-sm">
             No slides yet.
             <br />
             Upload photos to get started.
@@ -212,9 +212,9 @@ export function TimelineSidebar({
                   onDragEnd={handleDragEnd}
                   onClick={(e) => handleSlideClick(slide.id, e)}
                   className={cn(
-                    "bg-background border rounded p-2 text-xs cursor-pointer transition-colors select-none flex items-center gap-2",
+                    "bg-background flex cursor-pointer items-center gap-2 rounded border p-2 text-xs transition-colors select-none",
                     isCurrent &&
-                      "border-primary ring-2 ring-primary ring-offset-1",
+                      "border-primary ring-primary ring-2 ring-offset-1",
                     isSelected && !isCurrent && "border-primary",
                     !isSelected &&
                       !isCurrent &&
@@ -222,11 +222,11 @@ export function TimelineSidebar({
                     isDragging && "opacity-50",
                     isDropTarget &&
                       draggedIndex !== index &&
-                      "border-dashed border-2 border-primary"
+                      "border-primary border-2 border-dashed"
                   )}
                 >
-                  <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
-                  <div className="flex-1 min-w-0">
+                  <GripVertical className="text-muted-foreground h-4 w-4 flex-shrink-0 cursor-grab active:cursor-grabbing" />
+                  <div className="min-w-0 flex-1">
                     <div className="font-medium">Slide {index + 1}</div>
                     <div className="text-muted-foreground truncate">
                       {COLLAGE_LAYOUTS.find((l) => l.id === slide.layoutId)

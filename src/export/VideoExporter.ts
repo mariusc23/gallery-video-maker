@@ -1,8 +1,8 @@
-import type { Photo, Slide, CollageLayout } from '@/types';
-import { CanvasRenderer } from './CanvasRenderer';
-import { renderTransitionFrame } from './transitions';
-import type { ExportOptions, ExportProgress, ResolutionConfig } from './types';
-import { RESOLUTION_CONFIGS } from './types';
+import type { Photo, Slide, CollageLayout } from "@/types";
+import { CanvasRenderer } from "./CanvasRenderer";
+import { renderTransitionFrame } from "./transitions";
+import type { ExportOptions, ExportProgress, ResolutionConfig } from "./types";
+import { RESOLUTION_CONFIGS } from "./types";
 
 const BASE_FPS = 30; // Slide durations are stored at 30fps
 
@@ -18,7 +18,7 @@ export class VideoExporter {
   constructor(options: ExportOptions) {
     this.options = options;
     this.config = RESOLUTION_CONFIGS[options.resolution];
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement("canvas");
     this.canvas.width = this.config.width;
     this.canvas.height = this.config.height;
     this.renderer = new CanvasRenderer(this.config.width, this.config.height);
@@ -41,7 +41,7 @@ export class VideoExporter {
 
     // Pre-load all images
     onProgress({
-      status: 'preparing',
+      status: "preparing",
       currentFrame: 0,
       totalFrames,
       percentage: 0,
@@ -51,7 +51,7 @@ export class VideoExporter {
 
     // Check for abort
     if (this.abortController.signal.aborted) {
-      throw new Error('Export cancelled');
+      throw new Error("Export cancelled");
     }
 
     // Setup MediaRecorder with canvas stream
@@ -76,7 +76,7 @@ export class VideoExporter {
 
     // Render frame by frame
     onProgress({
-      status: 'rendering',
+      status: "rendering",
       currentFrame: 0,
       totalFrames,
       percentage: 0,
@@ -87,25 +87,26 @@ export class VideoExporter {
     let currentFrame = 0;
 
     // Copy images to main renderer's canvas
-    const ctx = this.canvas.getContext('2d')!;
+    const ctx = this.canvas.getContext("2d")!;
 
     for (let slideIndex = 0; slideIndex < slides.length; slideIndex++) {
       if (this.abortController.signal.aborted) {
         this.mediaRecorder.stop();
-        throw new Error('Export cancelled');
+        throw new Error("Export cancelled");
       }
 
       const slide = slides[slideIndex];
       const nextSlide = slides[slideIndex + 1];
       const transitionDurationBase = nextSlide ? slide.transition.duration : 0;
       const transitionDuration = Math.ceil(transitionDurationBase * fpsRatio);
-      const slideContentDuration = Math.ceil(slide.duration * fpsRatio) - transitionDuration;
+      const slideContentDuration =
+        Math.ceil(slide.duration * fpsRatio) - transitionDuration;
 
       // Render slide content frames
       for (let frame = 0; frame < slideContentDuration; frame++) {
         if (this.abortController.signal.aborted) {
           this.mediaRecorder.stop();
-          throw new Error('Export cancelled');
+          throw new Error("Export cancelled");
         }
 
         this.renderer.renderSlide(slide, photos, layouts);
@@ -120,7 +121,7 @@ export class VideoExporter {
         for (let frame = 0; frame < transitionDuration; frame++) {
           if (this.abortController.signal.aborted) {
             this.mediaRecorder.stop();
-            throw new Error('Export cancelled');
+            throw new Error("Export cancelled");
           }
 
           const progress = frame / transitionDuration;
@@ -144,7 +145,7 @@ export class VideoExporter {
 
     // Stop recording and wait for final data
     onProgress({
-      status: 'encoding',
+      status: "encoding",
       currentFrame: totalFrames,
       totalFrames,
       percentage: 100,
@@ -155,7 +156,7 @@ export class VideoExporter {
       this.mediaRecorder!.onstop = () => {
         const blob = new Blob(this.chunks, { type: mimeType });
         onProgress({
-          status: 'complete',
+          status: "complete",
           currentFrame: totalFrames,
           totalFrames,
           percentage: 100,
@@ -170,12 +171,12 @@ export class VideoExporter {
 
   private getSupportedMimeType(): string {
     const types = [
-      'video/mp4;codecs=h264',
-      'video/mp4',
-      'video/webm;codecs=h264',
-      'video/webm;codecs=vp9',
-      'video/webm;codecs=vp8',
-      'video/webm',
+      "video/mp4;codecs=h264",
+      "video/mp4",
+      "video/webm;codecs=h264",
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm",
     ];
 
     for (const type of types) {
@@ -184,10 +185,13 @@ export class VideoExporter {
       }
     }
 
-    return 'video/webm';
+    return "video/webm";
   }
 
-  private async waitForNextFrame(currentFrame: number, startTime: number): Promise<void> {
+  private async waitForNextFrame(
+    currentFrame: number,
+    startTime: number
+  ): Promise<void> {
     // Calculate when the next frame should be displayed based on elapsed time
     const frameDuration = 1000 / this.options.fps;
     const targetTime = startTime + (currentFrame + 1) * frameDuration;
@@ -209,10 +213,11 @@ export class VideoExporter {
     const elapsed = (Date.now() - startTime) / 1000;
     const framesPerSecond = currentFrame / elapsed;
     const remainingFrames = totalFrames - currentFrame;
-    const estimatedTimeRemaining = framesPerSecond > 0 ? remainingFrames / framesPerSecond : null;
+    const estimatedTimeRemaining =
+      framesPerSecond > 0 ? remainingFrames / framesPerSecond : null;
 
     onProgress({
-      status: 'rendering',
+      status: "rendering",
       currentFrame,
       totalFrames,
       percentage,

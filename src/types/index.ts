@@ -12,13 +12,13 @@ export interface Photo {
 
 // Transition types
 export type TransitionType =
-  | 'none'
-  | 'fade'
-  | 'slide'
-  | 'zoom'
-  | 'rotate'
-  | 'blur'
-  | 'kenBurns';
+  | "none"
+  | "fade"
+  | "slide"
+  | "zoom"
+  | "rotate"
+  | "blur"
+  | "kenBurns";
 
 export interface TransitionConfig {
   type: TransitionType;
@@ -26,7 +26,7 @@ export interface TransitionConfig {
 }
 
 // Crop configuration for a photo slot
-export type ObjectFit = 'cover' | 'contain';
+export type ObjectFit = "cover" | "contain";
 
 export interface SlotCropConfig {
   objectFit: ObjectFit;
@@ -35,7 +35,7 @@ export interface SlotCropConfig {
 }
 
 export const DEFAULT_SLOT_CROP: SlotCropConfig = {
-  objectFit: 'cover',
+  objectFit: "cover",
   offsetX: 0,
   offsetY: 0,
 };

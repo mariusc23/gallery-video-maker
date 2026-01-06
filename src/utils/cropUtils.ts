@@ -1,5 +1,5 @@
-import type { SlotCropConfig } from '@/types';
-import { DEFAULT_SLOT_CROP } from '@/types';
+import type { SlotCropConfig } from "@/types";
+import { DEFAULT_SLOT_CROP } from "@/types";
 
 /**
  * Get crop config for a specific slot, with fallback to defaults
@@ -19,11 +19,11 @@ export function getCropStyles(
   _photoAspect: number,
   _slotAspect: number
 ): React.CSSProperties {
-  if (cropConfig.objectFit === 'contain') {
+  if (cropConfig.objectFit === "contain") {
     return {
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain',
+      width: "100%",
+      height: "100%",
+      objectFit: "contain",
     };
   }
 
@@ -36,9 +36,9 @@ export function getCropStyles(
   const posY = 50 + cropConfig.offsetY * 50;
 
   return {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
     objectPosition: `${posX}% ${posY}%`,
   };
 }
@@ -56,7 +56,7 @@ export function calculateCropSourceRect(
   const imgAspect = imgWidth / imgHeight;
   const targetAspect = targetWidth / targetHeight;
 
-  if (cropConfig.objectFit === 'contain') {
+  if (cropConfig.objectFit === "contain") {
     // For contain, we draw the full image
     return {
       sourceX: 0,
