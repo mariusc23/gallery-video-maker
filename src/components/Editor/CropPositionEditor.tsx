@@ -33,8 +33,9 @@ export function CropPositionEditor({
     y: cropConfig.offsetY,
   });
 
-  // Reset local offset when crop config changes
+  // Sync local offset when crop config changes (intentional prop-to-state sync for controlled input)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalOffset({ x: cropConfig.offsetX, y: cropConfig.offsetY });
   }, [cropConfig.offsetX, cropConfig.offsetY]);
 

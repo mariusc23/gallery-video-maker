@@ -41,6 +41,7 @@ export function MediaLibraryDialog({
   // Update selection when initialSelectedPhotoIds changes (e.g., when dialog opens with dropped photos)
   useEffect(() => {
     if (initialSelectedPhotoIds && initialSelectedPhotoIds.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPhotoIds(new Set(initialSelectedPhotoIds));
     }
   }, [initialSelectedPhotoIds]);

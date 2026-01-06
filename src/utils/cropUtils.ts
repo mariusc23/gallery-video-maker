@@ -15,9 +15,7 @@ export function getSlotCropConfig(
  * Calculate CSS styles for rendering a photo with crop config (for preview)
  */
 export function getCropStyles(
-  cropConfig: SlotCropConfig,
-  _photoAspect: number,
-  _slotAspect: number
+  cropConfig: SlotCropConfig
 ): React.CSSProperties {
   if (cropConfig.objectFit === "contain") {
     return {

@@ -1,5 +1,9 @@
 {
   "permissions": {
-    "allow": ["Bash(mise exec -- npm run build)"]
+    "allow": [
+      "Bash(mise exec -- npm run build)",
+      "Bash(mise exec -- npm run lint)",
+      "Bash(mise exec -- npm run format)"
+    ]
   }
 }

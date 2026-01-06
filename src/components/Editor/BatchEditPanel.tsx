@@ -22,8 +22,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
-import type { TransitionType } from "@/types";
+import type { TransitionType, TransitionConfig } from "@/types";
 import { Trash2 } from "lucide-react";
+
+interface BatchUpdates {
+  duration?: number;
+  transition?: TransitionConfig;
+}
 
 const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
   { value: "none", label: "None (Cut)" },
@@ -47,7 +52,7 @@ export function BatchEditPanel() {
   const [layoutId, setLayoutId] = useState<string | null>(null);
 
   const handleApplyChanges = () => {
-    const updates: any = {};
+    const updates: BatchUpdates = {};
 
     // Apply duration change
     if (duration !== null) {

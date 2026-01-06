@@ -58,12 +58,7 @@ export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {
         }
 
         const cropConfig = getSlotCropConfig(slide.slotCrops, idx);
-        const slotAspect = (slot.width / slot.height) * (16 / 9);
-        const cropStyles = getCropStyles(
-          cropConfig,
-          photo.aspectRatio,
-          slotAspect
-        );
+        const cropStyles = getCropStyles(cropConfig);
 
         return (
           <div
