@@ -24,6 +24,7 @@ interface GalleryStore {
     photoIds: string[],
     layoutId?: string
   ) => void;
+  createSlidesAutoLayout: (photoIds: string[]) => void;
   addPhotosToSelectedSlides: (photoIds: string[]) => void;
   updateSlide: (slideId: string, updates: Partial<Slide>) => void;
   updateSlotCrop: (slideId: string, slotIndex: number, cropUpdates: Partial<SlotCropConfig>) => void;
@@ -154,6 +155,91 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       };
       newSlides.push(slide);
     });
+
+    set((state) => ({
+      slides: [...state.slides, ...newSlides],
+    }));
+  },
+
+  createSlidesAutoLayout: (photoIds: string[]) => {
+    const { photos } = get();
+    const newSlides: Slide[] = [];
+
+    if (photoIds.length === 0) return;
+
+    // Helper to check if photo is landscape (aspectRatio >= 1)
+    const isLandscape = (photoId: string): boolean => {
+      const photo = photos[photoId];
+      return photo ? photo.aspectRatio >= 1 : true; // Default to landscape if photo not found
+    };
+
+    // Alternator for large-left vs large-right layouts
+    let useLargeLeft = true;
+
+    let i = 0;
+    while (i < photoIds.length) {
+      const currentPhotoId = photoIds[i];
+      const nextPhotoId = photoIds[i + 1];
+
+      if (isLandscape(currentPhotoId)) {
+        // Landscape photo → single slide
+        newSlides.push({
+          id: generateId(),
+          layoutId: 'single',
+          photoIds: [currentPhotoId],
+          duration: 90,
+          transition: { type: 'fade', duration: 15 },
+        });
+        i++;
+      } else {
+        // Current photo is portrait
+        if (!nextPhotoId) {
+          // No next photo → single slide
+          newSlides.push({
+            id: generateId(),
+            layoutId: 'single',
+            photoIds: [currentPhotoId],
+            duration: 90,
+            transition: { type: 'fade', duration: 15 },
+          });
+          i++;
+        } else if (!isLandscape(nextPhotoId)) {
+          // Next photo is also portrait → split-horizontal (50/50)
+          newSlides.push({
+            id: generateId(),
+            layoutId: 'split-horizontal',
+            photoIds: [currentPhotoId, nextPhotoId],
+            duration: 90,
+            transition: { type: 'fade', duration: 15 },
+          });
+          i += 2;
+        } else {
+          // Next photo is landscape → side-by-side with landscape in large slot
+          // Alternate between large-left and large-right
+          if (useLargeLeft) {
+            // Landscape on left (large), Portrait on right (small)
+            newSlides.push({
+              id: generateId(),
+              layoutId: 'side-by-side-large-left',
+              photoIds: [nextPhotoId, currentPhotoId], // landscape first (gets 67%)
+              duration: 90,
+              transition: { type: 'fade', duration: 15 },
+            });
+          } else {
+            // Portrait on left (small), Landscape on right (large)
+            newSlides.push({
+              id: generateId(),
+              layoutId: 'side-by-side-large-right',
+              photoIds: [currentPhotoId, nextPhotoId], // portrait first (gets 33%), landscape second (gets 67%)
+              duration: 90,
+              transition: { type: 'fade', duration: 15 },
+            });
+          }
+          useLargeLeft = !useLargeLeft;
+          i += 2;
+        }
+      }
+    }
 
     set((state) => ({
       slides: [...state.slides, ...newSlides],

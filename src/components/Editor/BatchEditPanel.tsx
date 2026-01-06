@@ -10,8 +10,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import type { TransitionType } from "@/types";
+import { Trash2 } from "lucide-react";
 
 const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
   { value: "none", label: "None (Cut)" },
@@ -27,6 +39,7 @@ export function BatchEditPanel() {
   const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
   const batchUpdateSlides = useGalleryStore((state) => state.batchUpdateSlides);
   const batchChangeLayout = useGalleryStore((state) => state.batchChangeLayout);
+  const deleteSlides = useGalleryStore((state) => state.deleteSlides);
   const clearSelection = useGalleryStore((state) => state.clearSelection);
 
   const [duration, setDuration] = useState<number | null>(null);
@@ -72,6 +85,10 @@ export function BatchEditPanel() {
     setTransition(null);
     setLayoutId(null);
     clearSelection();
+  };
+
+  const handleDeleteSlides = () => {
+    deleteSlides(Array.from(selectedSlideIds));
   };
 
   return (
@@ -157,6 +174,36 @@ export function BatchEditPanel() {
         <Button onClick={handleCancel} variant="outline" className="flex-1">
           Cancel
         </Button>
+      </div>
+
+      {/* Delete Button */}
+      <div className="pt-4 border-t">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" className="w-full">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete {selectedSlideIds.size} Slide{selectedSlideIds.size === 1 ? "" : "s"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Slides</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete {selectedSlideIds.size} slide
+                {selectedSlideIds.size === 1 ? "" : "s"}? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteSlides}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

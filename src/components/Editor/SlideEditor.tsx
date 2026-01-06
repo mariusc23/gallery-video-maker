@@ -17,10 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import { BatchEditPanel } from "./BatchEditPanel";
 import { CropPositionEditor } from "./CropPositionEditor";
-import { X, ImagePlus, GripVertical, Maximize, Crop } from "lucide-react";
+import { X, ImagePlus, GripVertical, Maximize, Crop, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TransitionType, SlotCropConfig } from "@/types";
 import { DEFAULT_SLOT_CROP } from "@/types";
@@ -42,6 +53,7 @@ export function SlideEditor() {
   const slides = useGalleryStore((state) => state.slides);
   const updateSlide = useGalleryStore((state) => state.updateSlide);
   const updateSlotCrop = useGalleryStore((state) => state.updateSlotCrop);
+  const deleteSlides = useGalleryStore((state) => state.deleteSlides);
   const photos = useGalleryStore((state) => state.photos);
   const currentSlide = slides.find((s) => s.id === currentSlideId);
 
@@ -206,6 +218,10 @@ export function SlideEditor() {
   const handlePhotoDragEnd = () => {
     setDraggedPhotoIndex(null);
     setDropTargetPhotoIndex(null);
+  };
+
+  const handleDeleteSlide = () => {
+    deleteSlides([currentSlide.id]);
   };
 
   const layout = COLLAGE_LAYOUTS.find((l) => l.id === currentSlide.layoutId);
@@ -380,6 +396,35 @@ export function SlideEditor() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Delete Slide */}
+      <div className="pt-4 border-t">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" className="w-full">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Slide
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Slide</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this slide? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteSlide}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Photo Picker Dialog */}

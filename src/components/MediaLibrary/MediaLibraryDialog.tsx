@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { MediaUploadZone } from './MediaUploadZone';
-import { MediaGrid } from './MediaGrid';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { MediaUploadZone } from "./MediaUploadZone";
+import { MediaGrid } from "./MediaGrid";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useGalleryStore } from '@/store/useGalleryStore';
-import { COLLAGE_LAYOUTS } from '@/data/layouts';
+} from "@/components/ui/select";
+import { useGalleryStore } from "@/store/useGalleryStore";
+import { COLLAGE_LAYOUTS } from "@/data/layouts";
 
 interface MediaLibraryDialogProps {
   open: boolean;
@@ -33,8 +33,10 @@ export function MediaLibraryDialog({
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(
     new Set()
   );
-  const [selectedLayoutId, setSelectedLayoutId] = useState<string>('');
-  const [lastClickedPhotoId, setLastClickedPhotoId] = useState<string | null>(null);
+  const [selectedLayoutId, setSelectedLayoutId] = useState<string>("auto");
+  const [lastClickedPhotoId, setLastClickedPhotoId] = useState<string | null>(
+    null
+  );
 
   // Update selection when initialSelectedPhotoIds changes (e.g., when dialog opens with dropped photos)
   useEffect(() => {
@@ -51,23 +53,30 @@ export function MediaLibraryDialog({
   const createSlidesFromPhotos = useGalleryStore(
     (state) => state.createSlidesFromPhotos
   );
+  const createSlidesAutoLayout = useGalleryStore(
+    (state) => state.createSlidesAutoLayout
+  );
   const addPhotosToSelectedSlides = useGalleryStore(
     (state) => state.addPhotosToSelectedSlides
   );
 
   // Check if selected slides have empty slots
   const selectedSlides = slides.filter((s) => selectedSlideIds.has(s.id));
-  const hasEmptySlots = selectedSlides.some(
-    (s) => s.photoIds.some((id) => !id || id === '')
+  const hasEmptySlots = selectedSlides.some((s) =>
+    s.photoIds.some((id) => !id || id === "")
   );
 
   const handleCreateSlides = () => {
     const photoIds = Array.from(selectedPhotoIds);
     if (photoIds.length === 0) return;
 
-    createSlidesFromPhotos(photoIds, selectedLayoutId || undefined);
+    if (selectedLayoutId === "auto") {
+      createSlidesAutoLayout(photoIds);
+    } else {
+      createSlidesFromPhotos(photoIds, selectedLayoutId || undefined);
+    }
     setSelectedPhotoIds(new Set());
-    setSelectedLayoutId('');
+    setSelectedLayoutId("");
     setLastClickedPhotoId(null);
     onOpenChange(false);
   };
@@ -173,7 +182,7 @@ export function MediaLibraryDialog({
               <div className="flex items-center justify-between">
                 <div className="text-sm">
                   {selectedPhotoIds.size} photo
-                  {selectedPhotoIds.size === 1 ? '' : 's'} selected
+                  {selectedPhotoIds.size === 1 ? "" : "s"} selected
                 </div>
                 <Button
                   variant="outline"
@@ -186,17 +195,18 @@ export function MediaLibraryDialog({
 
               {selectedPhotoIds.size > 1 && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Layout (optional)
-                  </label>
+                  <label className="text-sm font-medium">Layout</label>
                   <Select
                     value={selectedLayoutId}
                     onValueChange={setSelectedLayoutId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a layout or create individual slides" />
+                      <SelectValue placeholder="Select a layout" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="auto">
+                        Auto (fit based on orientation)
+                      </SelectItem>
                       {COLLAGE_LAYOUTS.map((layout) => (
                         <SelectItem key={layout.id} value={layout.id}>
                           {layout.name} ({layout.photoCount} photos)
@@ -205,7 +215,9 @@ export function MediaLibraryDialog({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Photos will be divided into multiple slides based on the layout
+                    {selectedLayoutId === "auto"
+                      ? "Landscape photos get single slides, portraits are paired side by side"
+                      : "Photos will be divided into multiple slides based on the layout"}
                   </p>
                 </div>
               )}

@@ -18,7 +18,9 @@ export function TimelineSidebar({
   const selectSlideRange = useGalleryStore((state) => state.selectSlideRange);
   const setPlayheadFrame = useGalleryStore((state) => state.setPlayheadFrame);
   const reorderSlides = useGalleryStore((state) => state.reorderSlides);
-  const reorderSelectedSlides = useGalleryStore((state) => state.reorderSelectedSlides);
+  const reorderSelectedSlides = useGalleryStore(
+    (state) => state.reorderSelectedSlides
+  );
   const selectAllSlides = useGalleryStore((state) => state.selectAllSlides);
   const clearSelection = useGalleryStore((state) => state.clearSelection);
   const addPhotos = useGalleryStore((state) => state.addPhotos);
@@ -48,7 +50,7 @@ export function TimelineSidebar({
         // Don't clear selection if a dialog is open
         const isDialogOpen = document.querySelector('[role="dialog"]');
         if (!isDialogOpen) {
-          clearSelection();
+          // clearSelection();
         }
       }
     };
@@ -189,9 +191,14 @@ export function TimelineSidebar({
               const isSelected = selectedSlideIds.has(slide.id);
               const isCurrent = currentSlideId === slide.id;
               // Show as dragging if this slide is dragged, or if it's selected and a selected slide is being dragged
-              const draggedSlide = draggedIndex !== null ? slides[draggedIndex] : null;
-              const isMultiDrag = draggedSlide && selectedSlideIds.has(draggedSlide.id) && selectedSlideIds.size > 1;
-              const isDragging = draggedIndex === index || (isMultiDrag && isSelected);
+              const draggedSlide =
+                draggedIndex !== null ? slides[draggedIndex] : null;
+              const isMultiDrag =
+                draggedSlide &&
+                selectedSlideIds.has(draggedSlide.id) &&
+                selectedSlideIds.size > 1;
+              const isDragging =
+                draggedIndex === index || (isMultiDrag && isSelected);
               const isDropTarget = dropTargetIndex === index;
 
               return (
