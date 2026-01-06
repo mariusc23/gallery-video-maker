@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { COLLAGE_LAYOUTS } from '@/data/layouts';
+import { BatchEditPanel } from './BatchEditPanel';
 import type { TransitionType } from '@/types';
 
 const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
@@ -23,9 +24,15 @@ const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
 
 export function SlideEditor() {
   const currentSlideId = useGalleryStore((state) => state.currentSlideId);
+  const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
   const slides = useGalleryStore((state) => state.slides);
   const updateSlide = useGalleryStore((state) => state.updateSlide);
   const currentSlide = slides.find((s) => s.id === currentSlideId);
+
+  // Show batch editor if multiple slides are selected
+  if (selectedSlideIds.size > 1) {
+    return <BatchEditPanel />;
+  }
 
   if (!currentSlide) {
     return (
