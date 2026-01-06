@@ -1,6 +1,17 @@
 import type { CollageLayout } from '@/types';
 
 export const COLLAGE_LAYOUTS: CollageLayout[] = [
+  // 1 photo (single)
+  {
+    id: 'single',
+    name: 'Single Photo',
+    photoCount: 1,
+    aspectRatio: 16 / 9,
+    slots: [
+      { id: '1', x: 0, y: 0, width: 100, height: 100 },
+    ],
+  },
+
   // 2 photos
   {
     id: 'split-horizontal',

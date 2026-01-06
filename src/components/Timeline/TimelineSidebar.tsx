@@ -1,5 +1,6 @@
 import { useGalleryStore } from '@/store/useGalleryStore';
 import { cn } from '@/lib/utils';
+import { COLLAGE_LAYOUTS } from '@/data/layouts';
 
 export function TimelineSidebar() {
   const slides = useGalleryStore((state) => state.slides);
@@ -72,7 +73,7 @@ export function TimelineSidebar() {
                     Slide {index + 1}
                   </div>
                   <div className="text-muted-foreground">
-                    {slide.type === 'single' ? 'Single Photo' : 'Collage'}
+                    {COLLAGE_LAYOUTS.find(l => l.id === slide.layoutId)?.name || 'Unknown'}
                     {' · '}
                     {(slide.duration / 30).toFixed(1)}s
                   </div>

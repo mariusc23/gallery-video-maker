@@ -1,10 +1,10 @@
 import { AbsoluteFill, Img } from 'remotion';
-import type { CollageSlide as CollageSlideType } from '@/types';
+import type { Slide } from '@/types';
 import { useGalleryStore } from '@/store/useGalleryStore';
 import { COLLAGE_LAYOUTS } from '@/data/layouts';
 
 interface CollageSlideProps {
-  slide: CollageSlideType;
+  slide: Slide;
 }
 
 export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {

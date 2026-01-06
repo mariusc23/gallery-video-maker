@@ -37,33 +37,19 @@ export interface LayoutSlot {
 export interface CollageLayout {
   id: string;
   name: string;
-  photoCount: number; // 2-12
+  photoCount: number; // 1-12 (includes single photo)
   slots: LayoutSlot[];
   aspectRatio: number; // 16/9 for video
 }
 
-// Slide types
-export type SlideType = 'single' | 'collage';
-
-export interface BaseSlide {
+// Slide type - all slides are now treated as layouts with photo slots
+export interface Slide {
   id: string;
-  type: SlideType;
+  layoutId: string;
+  photoIds: string[]; // Must match layout photoCount
   duration: number; // in frames at 30fps
   transition: TransitionConfig;
 }
-
-export interface SingleSlide extends BaseSlide {
-  type: 'single';
-  photoId: string;
-}
-
-export interface CollageSlide extends BaseSlide {
-  type: 'collage';
-  layoutId: string;
-  photoIds: string[]; // Must match layout photoCount
-}
-
-export type Slide = SingleSlide | CollageSlide;
 
 // Application state
 export interface AppState {

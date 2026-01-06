@@ -46,11 +46,10 @@ export function MediaLibraryDialog({
     (state) => state.addPhotosToSelectedSlides
   );
 
-  // Check if selected slides have collage slides with empty slots
+  // Check if selected slides have empty slots
   const selectedSlides = slides.filter((s) => selectedSlideIds.has(s.id));
-  const hasCollageSlides = selectedSlides.some((s) => s.type === 'collage');
   const hasEmptySlots = selectedSlides.some(
-    (s) => s.type === 'collage' && s.photoIds.some((id) => !id || id === '')
+    (s) => s.photoIds.some((id) => !id || id === '')
   );
 
   const handleCreateSlides = () => {
@@ -89,6 +88,7 @@ export function MediaLibraryDialog({
           }
           return next;
         });
+        setLastClickedPhotoId(photoId);
       }
     } else if (isMultiSelect) {
       // Toggle individual selection
@@ -196,7 +196,7 @@ export function MediaLibraryDialog({
                 <Button onClick={handleCreateSlides} className="flex-1">
                   Create Slides
                 </Button>
-                {hasCollageSlides && (
+                {selectedSlideIds.size > 0 && (
                   <Button
                     onClick={handleAddToSlides}
                     variant="secondary"
@@ -207,7 +207,7 @@ export function MediaLibraryDialog({
                   </Button>
                 )}
               </div>
-              {hasCollageSlides && !hasEmptySlots && (
+              {selectedSlideIds.size > 0 && !hasEmptySlots && (
                 <p className="text-xs text-muted-foreground text-center">
                   Selected slides have no empty slots
                 </p>

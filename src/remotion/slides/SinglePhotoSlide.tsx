@@ -1,15 +1,17 @@
 import { AbsoluteFill, Img } from 'remotion';
-import type { SingleSlide } from '@/types';
+import type { Slide } from '@/types';
 import { useGalleryStore } from '@/store/useGalleryStore';
 
 interface SinglePhotoSlideProps {
-  slide: SingleSlide;
+  slide: Slide;
 }
 
+// NOTE: This component is deprecated. All slides now use CollageSlide with layouts.
+// Kept for backwards compatibility but not actively used.
 export const SinglePhotoSlide: React.FC<SinglePhotoSlideProps> = ({
   slide,
 }) => {
-  const photo = useGalleryStore((state) => state.photos[slide.photoId]);
+  const photo = useGalleryStore((state) => state.photos[slide.photoIds[0]]);
 
   if (!photo) {
     return (

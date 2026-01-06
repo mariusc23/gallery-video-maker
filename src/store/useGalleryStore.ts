@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Photo, Slide, SingleSlide, CollageSlide } from '@/types';
+import type { Photo, Slide } from '@/types';
 import { createPhotoFromFile, generateId, revokePhotoUrls } from '@/utils/photoUtils';
 import { COLLAGE_LAYOUTS } from '@/data/layouts';
 
@@ -31,8 +31,9 @@ interface GalleryStore {
   // Batch actions
   batchUpdateSlides: (
     slideIds: string[],
-    updates: Partial<Omit<Slide, 'id' | 'type' | 'photoId' | 'photoIds' | 'layoutId'>>
+    updates: Partial<Omit<Slide, 'id' | 'photoIds' | 'layoutId'>>
   ) => void;
+  batchChangeLayout: (slideIds: string[], newLayoutId: string) => void;
 
   // Selection actions
   selectSlide: (slideId: string, multi: boolean) => void;
@@ -97,14 +98,9 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       // Revoke Object URLs to prevent memory leaks
       revokePhotoUrls(photosToRevoke);
 
-      // Remove slides that use these photos
+      // Remove slides that use these photos (keep slides that still have some photos)
       const slides = state.slides.filter((slide) => {
-        if (slide.type === 'single') {
-          return !photoIds.includes(slide.photoId);
-        } else {
-          // Keep collage slides that still have some photos
-          return !slide.photoIds.every((id) => photoIds.includes(id));
-        }
+        return !slide.photoIds.every((id) => photoIds.includes(id) || !id || id === '');
       });
 
       return { photos, slides };
@@ -121,60 +117,36 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
 
     if (photoIds.length === 0) return;
 
-    // If no layout specified or only 1 photo, create single slides
-    if (!layoutId || photoIds.length === 1) {
-      photoIds.forEach((photoId) => {
-        const slide: SingleSlide = {
-          id: generateId(),
-          type: 'single',
-          photoId,
-          duration: 90, // 3 seconds at 30fps
-          transition: { type: 'fade', duration: 15 }, // 0.5s fade
-        };
-        newSlides.push(slide);
-      });
-    } else {
-      // Create collage slides
-      const layout = COLLAGE_LAYOUTS.find((l) => l.id === layoutId);
-      if (!layout) {
-        console.error('Layout not found:', layoutId);
-        return;
-      }
-
-      // Chunk photos into groups matching layout photo count
-      const chunks: string[][] = [];
-      for (let i = 0; i < photoIds.length; i += layout.photoCount) {
-        chunks.push(photoIds.slice(i, i + layout.photoCount));
-      }
-
-      chunks.forEach((chunk) => {
-        if (chunk.length === layout.photoCount) {
-          const slide: CollageSlide = {
-            id: generateId(),
-            type: 'collage',
-            layoutId,
-            photoIds: chunk,
-            duration: 90, // 3 seconds
-            transition: { type: 'fade', duration: 15 },
-          };
-          newSlides.push(slide);
-        } else if (chunk.length === 1) {
-          // Create single slide for remaining photo
-          const slide: SingleSlide = {
-            id: generateId(),
-            type: 'single',
-            photoId: chunk[0],
-            duration: 90,
-            transition: { type: 'fade', duration: 15 },
-          };
-          newSlides.push(slide);
-        }
-        // If chunk.length > 1 but < layout.photoCount, we could either:
-        // 1. Create a smaller layout (not implemented yet)
-        // 2. Skip them (current behavior)
-        // 3. Create individual slides
-      });
+    // Default to single photo layout if no layout specified or only 1 photo
+    const selectedLayoutId = layoutId || 'single';
+    const layout = COLLAGE_LAYOUTS.find((l) => l.id === selectedLayoutId);
+    if (!layout) {
+      console.error('Layout not found:', selectedLayoutId);
+      return;
     }
+
+    // Chunk photos into groups matching layout photo count
+    const chunks: string[][] = [];
+    for (let i = 0; i < photoIds.length; i += layout.photoCount) {
+      chunks.push(photoIds.slice(i, i + layout.photoCount));
+    }
+
+    chunks.forEach((chunk) => {
+      // Fill with photos or empty strings if not enough
+      const photoIdsForSlide = [...chunk];
+      while (photoIdsForSlide.length < layout.photoCount) {
+        photoIdsForSlide.push('');
+      }
+
+      const slide: Slide = {
+        id: generateId(),
+        layoutId: selectedLayoutId,
+        photoIds: photoIdsForSlide,
+        duration: 90, // 3 seconds at 30fps
+        transition: { type: 'fade', duration: 15 }, // 0.5s fade
+      };
+      newSlides.push(slide);
+    });
 
     set((state) => ({
       slides: [...state.slides, ...newSlides],
@@ -195,28 +167,22 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
         const slideIndex = updatedSlides.findIndex((s) => s.id === slide.id);
         if (slideIndex === -1) return;
 
-        if (slide.type === 'collage') {
-          // Add photos to collage, replacing empty slots first
-          const currentPhotoIds = [...slide.photoIds];
-          let photoIndex = 0;
+        // Add photos to slide, replacing empty slots first
+        const currentPhotoIds = [...slide.photoIds];
+        let photoIndex = 0;
 
-          // Fill empty slots first
-          for (let i = 0; i < currentPhotoIds.length && photoIndex < photoIds.length; i++) {
-            if (!currentPhotoIds[i] || currentPhotoIds[i] === '') {
-              currentPhotoIds[i] = photoIds[photoIndex];
-              photoIndex++;
-            }
+        // Fill empty slots first
+        for (let i = 0; i < currentPhotoIds.length && photoIndex < photoIds.length; i++) {
+          if (!currentPhotoIds[i] || currentPhotoIds[i] === '') {
+            currentPhotoIds[i] = photoIds[photoIndex];
+            photoIndex++;
           }
-
-          // If there are still photos left and all slots are filled,
-          // we could expand to a larger layout or create new slides
-          // For now, just update with filled slots
-          updatedSlides[slideIndex] = {
-            ...slide,
-            photoIds: currentPhotoIds,
-          } as Slide;
         }
-        // Single slides can't have photos added to them
+
+        updatedSlides[slideIndex] = {
+          ...slide,
+          photoIds: currentPhotoIds,
+        };
       });
 
       return { slides: updatedSlides };
@@ -261,6 +227,76 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
         slideIds.includes(slide.id) ? ({ ...slide, ...updates } as Slide) : slide
       ),
     }));
+  },
+
+  batchChangeLayout: (slideIds: string[], newLayoutId: string) => {
+    set((state) => {
+      const { slides } = state;
+      const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === newLayoutId);
+      if (!newLayout) {
+        console.error('Layout not found:', newLayoutId);
+        return state;
+      }
+
+      // Get selected slides
+      const selectedSlides = slides.filter((s) => slideIds.includes(s.id));
+
+      if (selectedSlides.length === 0) {
+        return state;
+      }
+
+      // Collect all photos from selected slides (excluding empty slots)
+      const allPhotos: string[] = [];
+      selectedSlides.forEach((slide) => {
+        slide.photoIds.forEach((photoId) => {
+          if (photoId && photoId !== '') {
+            allPhotos.push(photoId);
+          }
+        });
+      });
+
+      // Create new slides with redistributed photos
+      const newSlides: Slide[] = [];
+      let photoIndex = 0;
+
+      // Keep creating slides until we run out of photos
+      while (photoIndex < allPhotos.length) {
+        const photoIds: string[] = [];
+
+        // Fill this slide with photos
+        for (let i = 0; i < newLayout.photoCount; i++) {
+          if (photoIndex < allPhotos.length) {
+            photoIds.push(allPhotos[photoIndex]);
+            photoIndex++;
+          } else {
+            // Fill remaining slots with empty strings
+            photoIds.push('');
+          }
+        }
+
+        // Use properties from the first selected slide as template
+        const templateSlide = selectedSlides[0];
+        newSlides.push({
+          id: generateId(),
+          layoutId: newLayoutId,
+          photoIds,
+          duration: templateSlide.duration,
+          transition: templateSlide.transition,
+        });
+      }
+
+      // Replace selected slides with new slides in the timeline
+      // Find the index of the first selected slide
+      const firstSelectedIndex = slides.findIndex((s) =>
+        slideIds.includes(s.id)
+      );
+
+      // Remove all selected slides and insert new ones at the first position
+      const updatedSlides = slides.filter((s) => !slideIds.includes(s.id));
+      updatedSlides.splice(firstSelectedIndex, 0, ...newSlides);
+
+      return { slides: updatedSlides };
+    });
   },
 
   // Selection actions

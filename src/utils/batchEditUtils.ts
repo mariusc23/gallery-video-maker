@@ -1,4 +1,4 @@
-import type { Slide, CollageSlide } from '@/types';
+import type { Slide } from '@/types';
 import { COLLAGE_LAYOUTS } from '@/data/layouts';
 import { generateId } from './photoUtils';
 
@@ -18,20 +18,19 @@ export function splitSlidesForLayout(
   const newSlides: Slide[] = [];
 
   for (const slide of slides) {
-    // Single slides remain unchanged
-    if (slide.type === 'single') {
-      newSlides.push(slide);
-      continue;
-    }
-
-    const currentPhotos = slide.photoIds;
+    const currentPhotos = slide.photoIds.filter(id => id && id !== '');
 
     // If photos fit in new layout or fewer, update in place
     if (currentPhotos.length <= newLayout.photoCount) {
+      const paddedPhotoIds = [...currentPhotos];
+      while (paddedPhotoIds.length < newLayout.photoCount) {
+        paddedPhotoIds.push('');
+      }
       newSlides.push({
         ...slide,
         layoutId: newLayoutId,
-      } as CollageSlide);
+        photoIds: paddedPhotoIds,
+      });
     } else {
       // Need to split into multiple slides
       const chunks: string[][] = [];
@@ -40,48 +39,23 @@ export function splitSlidesForLayout(
       }
 
       chunks.forEach((chunk, idx) => {
-        if (chunk.length === newLayout.photoCount) {
-          // Create collage slide with full layout
-          newSlides.push({
-            ...slide,
-            id: idx === 0 ? slide.id : generateId(), // Keep original ID for first chunk
-            layoutId: newLayoutId,
-            photoIds: chunk,
-          } as CollageSlide);
-        } else if (chunk.length === 1) {
-          // Create single slide for remaining photo
-          newSlides.push({
-            id: generateId(),
-            type: 'single',
-            photoId: chunk[0],
-            duration: slide.duration,
-            transition: slide.transition,
-          });
-        } else {
-          // Find a layout that matches the remaining photo count
-          const matchingLayout = COLLAGE_LAYOUTS.find(
-            (l) => l.photoCount === chunk.length
-          );
-          if (matchingLayout) {
-            newSlides.push({
-              ...slide,
-              id: generateId(),
-              layoutId: matchingLayout.id,
-              photoIds: chunk,
-            } as CollageSlide);
-          } else {
-            // Fallback: create individual slides for remaining photos
-            chunk.forEach((photoId) => {
-              newSlides.push({
-                id: generateId(),
-                type: 'single',
-                photoId,
-                duration: slide.duration,
-                transition: slide.transition,
-              });
-            });
-          }
+        // Pad chunk with empty strings if needed
+        const paddedChunk = [...chunk];
+        while (paddedChunk.length < newLayout.photoCount) {
+          paddedChunk.push('');
         }
+
+        // Find matching layout or use the new layout
+        const matchingLayout = COLLAGE_LAYOUTS.find(
+          (l) => l.photoCount === chunk.length
+        ) || newLayout;
+
+        newSlides.push({
+          ...slide,
+          id: idx === 0 ? slide.id : generateId(), // Keep original ID for first chunk
+          layoutId: matchingLayout.id,
+          photoIds: paddedChunk.slice(0, matchingLayout.photoCount),
+        });
       });
     }
   }

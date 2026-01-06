@@ -79,69 +79,30 @@ export function SlideEditor() {
   };
 
   const handleLayoutChange = (value: string) => {
-    // Handle conversion to single photo
-    if (value === "single") {
-      if (currentSlide.type === "collage") {
-        // Convert collage to single, use first photo
-        const firstPhotoId = currentSlide.photoIds.find((id) => id && id !== "");
-        if (firstPhotoId) {
-          updateSlide(currentSlide.id, {
-            type: "single",
-            photoId: firstPhotoId,
-            duration: currentSlide.duration,
-            transition: currentSlide.transition,
-          });
-        }
-      }
-      return;
-    }
+    const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === value);
+    if (!newLayout) return;
 
-    // Handle conversion from single to collage
-    if (currentSlide.type === "single") {
-      const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === value);
-      if (newLayout) {
-        const photoIds = [
-          currentSlide.photoId,
-          ...Array(newLayout.photoCount - 1).fill(""),
-        ];
-        updateSlide(currentSlide.id, {
-          type: "collage",
-          layoutId: value,
-          photoIds,
-          duration: currentSlide.duration,
-          transition: currentSlide.transition,
-        });
-      }
-      return;
-    }
+    // Adjust photoIds array to match new layout's photo count
+    const currentPhotoIds = [...currentSlide.photoIds];
 
-    // Handle collage to collage layout change
-    if (currentSlide.type === "collage") {
-      const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === value);
-      if (newLayout) {
-        // Adjust photoIds array to match new layout's photo count
-        const currentPhotoIds = [...currentSlide.photoIds];
-
-        if (currentPhotoIds.length > newLayout.photoCount) {
-          // Trim excess photos
-          updateSlide(currentSlide.id, {
-            layoutId: value,
-            photoIds: currentPhotoIds.slice(0, newLayout.photoCount),
-          });
-        } else if (currentPhotoIds.length < newLayout.photoCount) {
-          // Fill with empty slots (we'll use empty strings as placeholders)
-          const paddedPhotoIds = [
-            ...currentPhotoIds,
-            ...Array(newLayout.photoCount - currentPhotoIds.length).fill(""),
-          ];
-          updateSlide(currentSlide.id, {
-            layoutId: value,
-            photoIds: paddedPhotoIds,
-          });
-        } else {
-          updateSlide(currentSlide.id, { layoutId: value });
-        }
-      }
+    if (currentPhotoIds.length > newLayout.photoCount) {
+      // Trim excess photos
+      updateSlide(currentSlide.id, {
+        layoutId: value,
+        photoIds: currentPhotoIds.slice(0, newLayout.photoCount),
+      });
+    } else if (currentPhotoIds.length < newLayout.photoCount) {
+      // Fill with empty slots
+      const paddedPhotoIds = [
+        ...currentPhotoIds,
+        ...Array(newLayout.photoCount - currentPhotoIds.length).fill(""),
+      ];
+      updateSlide(currentSlide.id, {
+        layoutId: value,
+        photoIds: paddedPhotoIds,
+      });
+    } else {
+      updateSlide(currentSlide.id, { layoutId: value });
     }
   };
 
@@ -151,12 +112,7 @@ export function SlideEditor() {
   };
 
   const handleSelectPhoto = (photoId: string) => {
-    if (currentSlide.type === "single") {
-      updateSlide(currentSlide.id, { photoId });
-    } else if (
-      currentSlide.type === "collage" &&
-      photoPickerSlotIndex !== null
-    ) {
+    if (photoPickerSlotIndex !== null) {
       const newPhotoIds = [...currentSlide.photoIds];
       newPhotoIds[photoPickerSlotIndex] = photoId;
       updateSlide(currentSlide.id, { photoIds: newPhotoIds });
@@ -166,38 +122,33 @@ export function SlideEditor() {
   };
 
   const handleRemovePhoto = (slotIndex: number) => {
-    if (currentSlide.type === "collage") {
-      const newPhotoIds = [...currentSlide.photoIds];
-      newPhotoIds[slotIndex] = "";
-      updateSlide(currentSlide.id, { photoIds: newPhotoIds });
-    }
+    const newPhotoIds = [...currentSlide.photoIds];
+    newPhotoIds[slotIndex] = "";
+    updateSlide(currentSlide.id, { photoIds: newPhotoIds });
   };
 
-  // Get current layout (use 'single' for single slides)
-  const currentLayoutId =
-    currentSlide.type === "single" ? "single" : currentSlide.layoutId;
+  const layout = COLLAGE_LAYOUTS.find((l) => l.id === currentSlide.layoutId);
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">Slide Editor</h2>
         <p className="text-sm text-muted-foreground">
-          {currentSlide.type === "single" ? "Single Photo" : "Collage"}
+          {layout?.name || "Unknown Layout"}
         </p>
       </div>
 
       {/* Layout Control */}
       <div className="space-y-2">
         <Label>Layout</Label>
-        <Select value={currentLayoutId} onValueChange={handleLayoutChange}>
+        <Select value={currentSlide.layoutId} onValueChange={handleLayoutChange}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="single">Single Photo</SelectItem>
             {COLLAGE_LAYOUTS.map((layout) => (
               <SelectItem key={layout.id} value={layout.id}>
-                {layout.name} ({layout.photoCount} photos)
+                {layout.name} ({layout.photoCount} {layout.photoCount === 1 ? 'photo' : 'photos'})
               </SelectItem>
             ))}
           </SelectContent>
@@ -210,43 +161,21 @@ export function SlideEditor() {
       {/* Photo Selection */}
       <div className="space-y-2">
         <Label>Photos</Label>
-        {currentSlide.type === "single" ? (
-          <div
-            onClick={() => handleOpenPhotoPicker(0)}
-            className="relative aspect-video rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:border-primary transition-colors group"
-          >
-            {photos[currentSlide.photoId] ? (
-              <>
-                <img
-                  src={photos[currentSlide.photoId].thumbnail}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <ImagePlus className="h-8 w-8 text-white" />
-                </div>
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                <ImagePlus className="h-8 w-8" />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {currentSlide.photoIds.map((photoId, index) => (
-              <div
-                key={index}
-                className="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:border-primary transition-colors group"
-              >
-                {photoId && photos[photoId] ? (
-                  <>
-                    <img
-                      src={photos[photoId].thumbnail}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      onClick={() => handleOpenPhotoPicker(index)}
-                    />
+        <div className={currentSlide.photoIds.length === 1 ? "" : "grid grid-cols-2 gap-2"}>
+          {currentSlide.photoIds.map((photoId, index) => (
+            <div
+              key={index}
+              className={`relative ${currentSlide.photoIds.length === 1 ? 'aspect-video' : 'aspect-square'} rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:border-primary transition-colors group`}
+            >
+              {photoId && photos[photoId] ? (
+                <>
+                  <img
+                    src={photos[photoId].thumbnail}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onClick={() => handleOpenPhotoPicker(index)}
+                  />
+                  {currentSlide.photoIds.length > 1 && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -256,25 +185,25 @@ export function SlideEditor() {
                     >
                       <X className="h-3 w-3 text-white" />
                     </button>
-                    <div
-                      onClick={() => handleOpenPhotoPicker(index)}
-                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                    >
-                      <ImagePlus className="h-6 w-6 text-white" />
-                    </div>
-                  </>
-                ) : (
+                  )}
                   <div
                     onClick={() => handleOpenPhotoPicker(index)}
-                    className="w-full h-full flex items-center justify-center text-muted-foreground"
+                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                   >
-                    <ImagePlus className="h-6 w-6" />
+                    <ImagePlus className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`} />
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                </>
+              ) : (
+                <div
+                  onClick={() => handleOpenPhotoPicker(index)}
+                  className="w-full h-full flex items-center justify-center text-muted-foreground"
+                >
+                  <ImagePlus className={currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
         <p className="text-xs text-muted-foreground">Click to change photos</p>
       </div>
 

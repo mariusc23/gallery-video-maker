@@ -1,40 +1,37 @@
-import { useState } from 'react';
-import { useGalleryStore } from '@/store/useGalleryStore';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useGalleryStore } from "@/store/useGalleryStore";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { COLLAGE_LAYOUTS } from '@/data/layouts';
-import type { TransitionType } from '@/types';
+} from "@/components/ui/select";
+import { COLLAGE_LAYOUTS } from "@/data/layouts";
+import type { TransitionType } from "@/types";
 
 const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
-  { value: 'none', label: 'None (Cut)' },
-  { value: 'fade', label: 'Fade' },
-  { value: 'slide', label: 'Slide' },
-  { value: 'zoom', label: 'Zoom' },
-  { value: 'rotate', label: 'Rotate' },
-  { value: 'blur', label: 'Blur' },
-  { value: 'kenBurns', label: 'Ken Burns' },
+  { value: "none", label: "None (Cut)" },
+  { value: "fade", label: "Fade" },
+  { value: "slide", label: "Slide" },
+  { value: "zoom", label: "Zoom" },
+  { value: "rotate", label: "Rotate" },
+  { value: "blur", label: "Blur" },
+  { value: "kenBurns", label: "Ken Burns" },
 ];
 
 export function BatchEditPanel() {
   const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
-  const slides = useGalleryStore((state) => state.slides);
   const batchUpdateSlides = useGalleryStore((state) => state.batchUpdateSlides);
+  const batchChangeLayout = useGalleryStore((state) => state.batchChangeLayout);
   const clearSelection = useGalleryStore((state) => state.clearSelection);
 
   const [duration, setDuration] = useState<number | null>(null);
   const [transition, setTransition] = useState<TransitionType | null>(null);
   const [layoutId, setLayoutId] = useState<string | null>(null);
-
-  const selectedSlides = slides.filter((s) => selectedSlideIds.has(s.id));
-  const hasCollageSlides = selectedSlides.some((s) => s.type === 'collage');
 
   const handleApplyChanges = () => {
     const updates: any = {};
@@ -49,21 +46,15 @@ export function BatchEditPanel() {
       updates.transition = { type: transition, duration: 15 };
     }
 
-    // Apply layout change (requires slide splitting)
-    if (layoutId !== null && hasCollageSlides) {
-      // Get the slides to update
-      const slidesToUpdate = selectedSlides.filter((s) => s.type === 'collage');
+    // Apply layout change with photo redistribution
+    if (layoutId !== null) {
+      const slideIdsArray = Array.from(selectedSlideIds);
 
-      // For now, just update the layout for slides that fit
-      // Full slide splitting implementation would require a more complex store method
-      const newLayout = COLLAGE_LAYOUTS.find(l => l.id === layoutId);
-      const slideIdsToUpdate = slidesToUpdate
-        .filter((s) => s.type === 'collage' && s.photoIds.length <= (newLayout?.photoCount || 0))
-        .map((s) => s.id);
+      // Use the new batch change layout method that redistributes photos
+      batchChangeLayout(slideIdsArray, layoutId);
 
-      if (slideIdsToUpdate.length > 0) {
-        batchUpdateSlides(slideIdsToUpdate, { ...updates, layoutId });
-      }
+      // Note: batchChangeLayout already handles duration/transition from the template slide
+      // No need to apply updates separately for layout changes
     } else {
       // Apply updates without layout change
       batchUpdateSlides(Array.from(selectedSlideIds), updates);
@@ -88,7 +79,29 @@ export function BatchEditPanel() {
       <div>
         <h2 className="text-lg font-semibold mb-1">Batch Edit</h2>
         <p className="text-sm text-muted-foreground">
-          Editing {selectedSlideIds.size} slide{selectedSlideIds.size === 1 ? '' : 's'}
+          Editing {selectedSlideIds.size} slide
+          {selectedSlideIds.size === 1 ? "" : "s"}
+        </p>
+      </div>
+
+      {/* Layout Control */}
+      <div className="space-y-2">
+        <Label>Layout</Label>
+        <Select value={layoutId ?? ""} onValueChange={setLayoutId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Leave unchanged" />
+          </SelectTrigger>
+          <SelectContent>
+            {COLLAGE_LAYOUTS.map((layout) => (
+              <SelectItem key={layout.id} value={layout.id}>
+                {layout.name} ({layout.photoCount}{" "}
+                {layout.photoCount === 1 ? "photo" : "photos"})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Photos will be redistributed across slides to fill all available slots
         </p>
       </div>
 
@@ -111,8 +124,8 @@ export function BatchEditPanel() {
         />
         <p className="text-xs text-muted-foreground">
           {duration === null
-            ? 'Leave unchanged'
-            : 'Apply to all selected slides'}
+            ? "Leave unchanged"
+            : "Apply to all selected slides"}
         </p>
       </div>
 
@@ -120,7 +133,7 @@ export function BatchEditPanel() {
       <div className="space-y-2">
         <Label>Transition</Label>
         <Select
-          value={transition ?? ''}
+          value={transition ?? ""}
           onValueChange={(value) => setTransition(value as TransitionType)}
         >
           <SelectTrigger>
@@ -135,31 +148,6 @@ export function BatchEditPanel() {
           </SelectContent>
         </Select>
       </div>
-
-      {/* Layout Control (Collage slides only) */}
-      {hasCollageSlides && (
-        <div className="space-y-2">
-          <Label>Layout (collage slides only)</Label>
-          <Select
-            value={layoutId ?? ''}
-            onValueChange={setLayoutId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Leave unchanged" />
-            </SelectTrigger>
-            <SelectContent>
-              {COLLAGE_LAYOUTS.map((layout) => (
-                <SelectItem key={layout.id} value={layout.id}>
-                  {layout.name} ({layout.photoCount} photos)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Slides with more photos will be split into multiple slides
-          </p>
-        </div>
-      )}
 
       {/* Action Buttons */}
       <div className="flex gap-2">
