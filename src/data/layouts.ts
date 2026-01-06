@@ -70,9 +70,10 @@ export const COLLAGE_LAYOUTS: CollageLayout[] = [
     name: "Grid 3 (Large Right)",
     photoCount: 3,
     slots: [
-      { height: 100, id: "1", width: 66.67, x: 33.33, y: 0 },
-      { height: 50, id: "2", width: 33.33, x: 0, y: 0 },
-      { height: 50, id: "3", width: 33.33, x: 0, y: 50 },
+      // Slots ordered left-to-right, top-to-bottom for visual order
+      { height: 50, id: "1", width: 33.33, x: 0, y: 0 },
+      { height: 50, id: "2", width: 33.33, x: 0, y: 50 },
+      { height: 100, id: "3", width: 66.67, x: 33.33, y: 0 },
     ],
   },
   {

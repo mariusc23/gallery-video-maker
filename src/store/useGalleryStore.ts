@@ -292,9 +292,6 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       };
     };
 
-    // Alternator for large-left vs large-right layouts
-    let useLargeLeft = true;
-
     let i = 0;
     while (i < photoIds.length) {
       const currentPhotoId = photoIds[i];
@@ -318,25 +315,13 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
           i += 2;
         } else {
           // Next photo is landscape → side-by-side with landscape in large slot
-          // Alternate between large-left and large-right
-          if (useLargeLeft) {
-            // Landscape on left (large), Portrait on right (small)
-            newSlides.push(
-              createSlide("side-by-side-large-left", [
-                nextPhotoId,
-                currentPhotoId,
-              ])
-            );
-          } else {
-            // Portrait on left (small), Landscape on right (large)
-            newSlides.push(
-              createSlide("side-by-side-large-right", [
-                currentPhotoId,
-                nextPhotoId,
-              ])
-            );
-          }
-          useLargeLeft = !useLargeLeft;
+          // Always use large-right to preserve photo order (current photo first, then next)
+          newSlides.push(
+            createSlide("side-by-side-large-right", [
+              currentPhotoId,
+              nextPhotoId,
+            ])
+          );
           i += 2;
         }
       }
