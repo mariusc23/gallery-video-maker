@@ -1,8 +1,39 @@
-import { create } from 'zustand';
-import type { Photo, Slide, SlotCropConfig } from '@/types';
-import { DEFAULT_SLOT_CROP } from '@/types';
-import { createPhotoFromFile, generateId, revokePhotoUrls } from '@/utils/photoUtils';
-import { COLLAGE_LAYOUTS } from '@/data/layouts';
+import { create } from "zustand";
+import type { Photo, Slide, SlotCropConfig, LayoutSlot } from "@/types";
+import { DEFAULT_SLOT_CROP } from "@/types";
+import {
+  createPhotoFromFile,
+  generateId,
+  revokePhotoUrls,
+} from "@/utils/photoUtils";
+import { COLLAGE_LAYOUTS } from "@/data/layouts";
+import { calculateFaceCropOffset } from "@/utils/cropUtils";
+
+/**
+ * Calculate initial slot crop config for a photo, using face detection if available
+ */
+function getInitialSlotCrop(
+  photo: Photo | undefined,
+  slot: LayoutSlot
+): SlotCropConfig {
+  if (!photo?.faceCenter) {
+    return { ...DEFAULT_SLOT_CROP };
+  }
+
+  // Calculate slot aspect ratio (slot dimensions are percentages of 16:9 canvas)
+  const slotAspect = (slot.width / slot.height) * (16 / 9);
+  const { offsetX, offsetY } = calculateFaceCropOffset(
+    photo.faceCenter,
+    photo.aspectRatio,
+    slotAspect
+  );
+
+  return {
+    ...DEFAULT_SLOT_CROP,
+    offsetX,
+    offsetY,
+  };
+}
 
 interface GalleryStore {
   // State
@@ -20,14 +51,15 @@ interface GalleryStore {
   getPhoto: (photoId: string) => Photo | undefined;
 
   // Slide actions
-  createSlidesFromPhotos: (
-    photoIds: string[],
-    layoutId?: string
-  ) => void;
+  createSlidesFromPhotos: (photoIds: string[], layoutId?: string) => void;
   createSlidesAutoLayout: (photoIds: string[]) => void;
   addPhotosToSelectedSlides: (photoIds: string[]) => void;
   updateSlide: (slideId: string, updates: Partial<Slide>) => void;
-  updateSlotCrop: (slideId: string, slotIndex: number, cropUpdates: Partial<SlotCropConfig>) => void;
+  updateSlotCrop: (
+    slideId: string,
+    slotIndex: number,
+    cropUpdates: Partial<SlotCropConfig>
+  ) => void;
   deleteSlides: (slideIds: string[]) => void;
   reorderSlides: (oldIndex: number, newIndex: number) => void;
   reorderSelectedSlides: (targetIndex: number) => void;
@@ -35,7 +67,7 @@ interface GalleryStore {
   // Batch actions
   batchUpdateSlides: (
     slideIds: string[],
-    updates: Partial<Omit<Slide, 'id' | 'photoIds' | 'layoutId'>>
+    updates: Partial<Omit<Slide, "id" | "photoIds" | "layoutId">>
   ) => void;
   batchChangeLayout: (slideIds: string[], newLayoutId: string) => void;
 
@@ -75,7 +107,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
         const photo = await createPhotoFromFile(file);
         newPhotos.push(photo);
       } catch (error) {
-        console.error('Failed to process photo:', error);
+        console.error("Failed to process photo:", error);
       }
     }
 
@@ -108,7 +140,9 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
 
       // Remove slides that use these photos (keep slides that still have some photos)
       const slides = state.slides.filter((slide) => {
-        return !slide.photoIds.every((id) => photoIds.includes(id) || !id || id === '');
+        return !slide.photoIds.every(
+          (id) => photoIds.includes(id) || !id || id === ""
+        );
       });
 
       return { photos, slides };
@@ -121,15 +155,16 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
 
   // Slide actions
   createSlidesFromPhotos: (photoIds: string[], layoutId?: string) => {
+    const { photos } = get();
     const newSlides: Slide[] = [];
 
     if (photoIds.length === 0) return;
 
     // Default to single photo layout if no layout specified or only 1 photo
-    const selectedLayoutId = layoutId || 'single';
+    const selectedLayoutId = layoutId || "single";
     const layout = COLLAGE_LAYOUTS.find((l) => l.id === selectedLayoutId);
     if (!layout) {
-      console.error('Layout not found:', selectedLayoutId);
+      console.error("Layout not found:", selectedLayoutId);
       return;
     }
 
@@ -143,15 +178,23 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       // Fill with photos or empty strings if not enough
       const photoIdsForSlide = [...chunk];
       while (photoIdsForSlide.length < layout.photoCount) {
-        photoIdsForSlide.push('');
+        photoIdsForSlide.push("");
       }
+
+      // Calculate initial crop configs based on face detection
+      const slotCrops = photoIdsForSlide.map((photoId, idx) => {
+        const photo = photos[photoId];
+        const slot = layout.slots[idx];
+        return getInitialSlotCrop(photo, slot);
+      });
 
       const slide: Slide = {
         id: generateId(),
         layoutId: selectedLayoutId,
         photoIds: photoIdsForSlide,
+        slotCrops,
         duration: 90, // 3 seconds at 30fps
-        transition: { type: 'fade', duration: 15 }, // 0.5s fade
+        transition: { type: "fade", duration: 15 }, // 0.5s fade
       };
       newSlides.push(slide);
     });
@@ -173,6 +216,27 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       return photo ? photo.aspectRatio >= 1 : true; // Default to landscape if photo not found
     };
 
+    // Helper to create slide with face-based crop
+    const createSlide = (layoutId: string, slidePhotoIds: string[]): Slide => {
+      const layout = COLLAGE_LAYOUTS.find((l) => l.id === layoutId);
+      const slotCrops = slidePhotoIds.map((photoId, idx) => {
+        const photo = photos[photoId];
+        const slot = layout?.slots[idx];
+        return slot
+          ? getInitialSlotCrop(photo, slot)
+          : { ...DEFAULT_SLOT_CROP };
+      });
+
+      return {
+        id: generateId(),
+        layoutId,
+        photoIds: slidePhotoIds,
+        slotCrops,
+        duration: 90,
+        transition: { type: "fade", duration: 15 },
+      };
+    };
+
     // Alternator for large-left vs large-right layouts
     let useLargeLeft = true;
 
@@ -183,57 +247,39 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
 
       if (isLandscape(currentPhotoId)) {
         // Landscape photo → single slide
-        newSlides.push({
-          id: generateId(),
-          layoutId: 'single',
-          photoIds: [currentPhotoId],
-          duration: 90,
-          transition: { type: 'fade', duration: 15 },
-        });
+        newSlides.push(createSlide("single", [currentPhotoId]));
         i++;
       } else {
         // Current photo is portrait
         if (!nextPhotoId) {
           // No next photo → single slide
-          newSlides.push({
-            id: generateId(),
-            layoutId: 'single',
-            photoIds: [currentPhotoId],
-            duration: 90,
-            transition: { type: 'fade', duration: 15 },
-          });
+          newSlides.push(createSlide("single", [currentPhotoId]));
           i++;
         } else if (!isLandscape(nextPhotoId)) {
           // Next photo is also portrait → split-horizontal (50/50)
-          newSlides.push({
-            id: generateId(),
-            layoutId: 'split-horizontal',
-            photoIds: [currentPhotoId, nextPhotoId],
-            duration: 90,
-            transition: { type: 'fade', duration: 15 },
-          });
+          newSlides.push(
+            createSlide("split-horizontal", [currentPhotoId, nextPhotoId])
+          );
           i += 2;
         } else {
           // Next photo is landscape → side-by-side with landscape in large slot
           // Alternate between large-left and large-right
           if (useLargeLeft) {
             // Landscape on left (large), Portrait on right (small)
-            newSlides.push({
-              id: generateId(),
-              layoutId: 'side-by-side-large-left',
-              photoIds: [nextPhotoId, currentPhotoId], // landscape first (gets 67%)
-              duration: 90,
-              transition: { type: 'fade', duration: 15 },
-            });
+            newSlides.push(
+              createSlide("side-by-side-large-left", [
+                nextPhotoId,
+                currentPhotoId,
+              ])
+            );
           } else {
             // Portrait on left (small), Landscape on right (large)
-            newSlides.push({
-              id: generateId(),
-              layoutId: 'side-by-side-large-right',
-              photoIds: [currentPhotoId, nextPhotoId], // portrait first (gets 33%), landscape second (gets 67%)
-              duration: 90,
-              transition: { type: 'fade', duration: 15 },
-            });
+            newSlides.push(
+              createSlide("side-by-side-large-right", [
+                currentPhotoId,
+                nextPhotoId,
+              ])
+            );
           }
           useLargeLeft = !useLargeLeft;
           i += 2;
@@ -265,8 +311,12 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
         let photoIndex = 0;
 
         // Fill empty slots first
-        for (let i = 0; i < currentPhotoIds.length && photoIndex < photoIds.length; i++) {
-          if (!currentPhotoIds[i] || currentPhotoIds[i] === '') {
+        for (
+          let i = 0;
+          i < currentPhotoIds.length && photoIndex < photoIds.length;
+          i++
+        ) {
+          if (!currentPhotoIds[i] || currentPhotoIds[i] === "") {
             currentPhotoIds[i] = photoIds[photoIndex];
             photoIndex++;
           }
@@ -290,7 +340,11 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
     }));
   },
 
-  updateSlotCrop: (slideId: string, slotIndex: number, cropUpdates: Partial<SlotCropConfig>) => {
+  updateSlotCrop: (
+    slideId: string,
+    slotIndex: number,
+    cropUpdates: Partial<SlotCropConfig>
+  ) => {
     set((state) => ({
       slides: state.slides.map((slide) => {
         if (slide.id !== slideId) return slide;
@@ -298,7 +352,9 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
         // Initialize slotCrops array if needed
         const slotCrops = slide.slotCrops
           ? [...slide.slotCrops]
-          : Array(slide.photoIds.length).fill(null).map(() => ({ ...DEFAULT_SLOT_CROP }));
+          : Array(slide.photoIds.length)
+              .fill(null)
+              .map(() => ({ ...DEFAULT_SLOT_CROP }));
 
         // Extend array if needed
         while (slotCrops.length <= slotIndex) {
@@ -315,11 +371,15 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
 
   deleteSlides: (slideIds: string[]) => {
     set((state) => {
-      const slides = state.slides.filter((slide) => !slideIds.includes(slide.id));
-      const selectedSlideIds = new Set(
-        Array.from(state.selectedSlideIds).filter((id) => !slideIds.includes(id))
+      const slides = state.slides.filter(
+        (slide) => !slideIds.includes(slide.id)
       );
-      const currentSlideId = slideIds.includes(state.currentSlideId ?? '')
+      const selectedSlideIds = new Set(
+        Array.from(state.selectedSlideIds).filter(
+          (id) => !slideIds.includes(id)
+        )
+      );
+      const currentSlideId = slideIds.includes(state.currentSlideId ?? "")
         ? null
         : state.currentSlideId;
 
@@ -356,7 +416,11 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       // Find how many non-selected slides come before the target
       let insertPosition = 0;
       let slidesBeforeTarget = 0;
-      for (let i = 0; i < slides.length && slidesBeforeTarget < targetIndex; i++) {
+      for (
+        let i = 0;
+        i < slides.length && slidesBeforeTarget < targetIndex;
+        i++
+      ) {
         if (!selectedSlideIds.has(slides[i].id)) {
           insertPosition++;
         }
@@ -378,7 +442,9 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
   batchUpdateSlides: (slideIds: string[], updates) => {
     set((state) => ({
       slides: state.slides.map((slide) =>
-        slideIds.includes(slide.id) ? ({ ...slide, ...updates } as Slide) : slide
+        slideIds.includes(slide.id)
+          ? ({ ...slide, ...updates } as Slide)
+          : slide
       ),
     }));
   },
@@ -388,7 +454,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       const { slides } = state;
       const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === newLayoutId);
       if (!newLayout) {
-        console.error('Layout not found:', newLayoutId);
+        console.error("Layout not found:", newLayoutId);
         return state;
       }
 
@@ -403,7 +469,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       const allPhotos: string[] = [];
       selectedSlides.forEach((slide) => {
         slide.photoIds.forEach((photoId) => {
-          if (photoId && photoId !== '') {
+          if (photoId && photoId !== "") {
             allPhotos.push(photoId);
           }
         });
@@ -424,7 +490,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
             photoIndex++;
           } else {
             // Fill remaining slots with empty strings
-            photoIds.push('');
+            photoIds.push("");
           }
         }
 

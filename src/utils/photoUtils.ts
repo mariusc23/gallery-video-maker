@@ -1,4 +1,5 @@
 import type { Photo } from '@/types';
+import { detectFaceCenter } from './faceDetection';
 
 /**
  * Generate a unique ID for photos and slides
@@ -60,6 +61,9 @@ export async function createPhotoFromFile(file: File): Promise<Photo> {
     // Create thumbnail
     const thumbnail = await createThumbnail(img, 200);
 
+    // Detect face center for smart cropping
+    const faceCenter = await detectFaceCenter(img);
+
     return {
       id,
       file,
@@ -68,6 +72,7 @@ export async function createPhotoFromFile(file: File): Promise<Photo> {
       width: img.width,
       height: img.height,
       aspectRatio: img.width / img.height,
+      faceCenter: faceCenter ?? undefined,
     };
   } catch (error) {
     // Clean up object URL if there's an error

@@ -7,6 +7,7 @@ export interface Photo {
   width: number;
   height: number;
   aspectRatio: number;
+  faceCenter?: { x: number; y: number }; // Normalized 0-1 position of detected face center
 }
 
 // Transition types

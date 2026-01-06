@@ -132,3 +132,33 @@ export function calculateContainDestRect(
 export function clampOffset(offset: number): number {
   return Math.max(-1, Math.min(1, offset));
 }
+
+/**
+ * Calculate crop offset to center on a face position.
+ * @param faceCenter - Normalized face position (0-1)
+ * @param photoAspect - Photo width/height ratio
+ * @param slotAspect - Slot width/height ratio
+ * @returns offsetX, offsetY for SlotCropConfig (-1 to 1)
+ */
+export function calculateFaceCropOffset(
+  faceCenter: { x: number; y: number },
+  photoAspect: number,
+  slotAspect: number
+): { offsetX: number; offsetY: number } {
+  let offsetX = 0;
+  let offsetY = 0;
+
+  if (photoAspect > slotAspect) {
+    // Photo is wider than slot - can pan horizontally
+    // faceCenter.x: 0.5 = centered (offset 0), 0 = left (offset -1), 1 = right (offset 1)
+    offsetX = (faceCenter.x - 0.5) * 2;
+  } else {
+    // Photo is taller than slot - can pan vertically
+    offsetY = (faceCenter.y - 0.5) * 2;
+  }
+
+  return {
+    offsetX: clampOffset(offsetX),
+    offsetY: clampOffset(offsetY),
+  };
+}
