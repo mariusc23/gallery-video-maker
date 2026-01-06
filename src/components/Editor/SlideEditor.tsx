@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGalleryStore } from "@/store/useGalleryStore";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,9 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import { BatchEditPanel } from "./BatchEditPanel";
-import { X, ImagePlus, GripVertical } from "lucide-react";
+import { CropPositionEditor } from "./CropPositionEditor";
+import { X, ImagePlus, GripVertical, Maximize, Crop } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { TransitionType } from "@/types";
+import type { TransitionType, SlotCropConfig } from "@/types";
+import { DEFAULT_SLOT_CROP } from "@/types";
+import { getSlotCropConfig } from "@/utils/cropUtils";
 
 const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
   { value: "none", label: "None (Cut)" },
@@ -37,6 +41,7 @@ export function SlideEditor() {
   const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
   const slides = useGalleryStore((state) => state.slides);
   const updateSlide = useGalleryStore((state) => state.updateSlide);
+  const updateSlotCrop = useGalleryStore((state) => state.updateSlotCrop);
   const photos = useGalleryStore((state) => state.photos);
   const currentSlide = slides.find((s) => s.id === currentSlideId);
 
@@ -46,6 +51,8 @@ export function SlideEditor() {
   >(null);
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
   const [dropTargetPhotoIndex, setDropTargetPhotoIndex] = useState<number | null>(null);
+  const [cropEditorOpen, setCropEditorOpen] = useState(false);
+  const [cropEditorSlotIndex, setCropEditorSlotIndex] = useState<number | null>(null);
 
   const photoList = Object.values(photos);
 
@@ -126,7 +133,26 @@ export function SlideEditor() {
   const handleRemovePhoto = (slotIndex: number) => {
     const newPhotoIds = [...currentSlide.photoIds];
     newPhotoIds[slotIndex] = "";
+    // Also reset crop config for this slot
+    updateSlotCrop(currentSlide.id, slotIndex, DEFAULT_SLOT_CROP);
     updateSlide(currentSlide.id, { photoIds: newPhotoIds });
+  };
+
+  const handleToggleObjectFit = (slotIndex: number) => {
+    const currentConfig = getSlotCropConfig(currentSlide.slotCrops, slotIndex);
+    const newFit = currentConfig.objectFit === 'cover' ? 'contain' : 'cover';
+    updateSlotCrop(currentSlide.id, slotIndex, { objectFit: newFit });
+  };
+
+  const handleOpenCropEditor = (slotIndex: number) => {
+    setCropEditorSlotIndex(slotIndex);
+    setCropEditorOpen(true);
+  };
+
+  const handleCropUpdate = (updates: Partial<SlotCropConfig>) => {
+    if (cropEditorSlotIndex !== null) {
+      updateSlotCrop(currentSlide.id, cropEditorSlotIndex, updates);
+    }
   };
 
   const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
@@ -155,7 +181,22 @@ export function SlideEditor() {
       const temp = newPhotoIds[sourceIndex];
       newPhotoIds[sourceIndex] = newPhotoIds[targetIndex];
       newPhotoIds[targetIndex] = temp;
-      updateSlide(currentSlide.id, { photoIds: newPhotoIds });
+
+      // Also swap the crop configs if they exist
+      const newSlotCrops = currentSlide.slotCrops
+        ? [...currentSlide.slotCrops]
+        : Array(currentSlide.photoIds.length).fill(null).map(() => ({ ...DEFAULT_SLOT_CROP }));
+
+      // Ensure array is long enough
+      while (newSlotCrops.length <= Math.max(sourceIndex, targetIndex)) {
+        newSlotCrops.push({ ...DEFAULT_SLOT_CROP });
+      }
+
+      const tempCrop = newSlotCrops[sourceIndex];
+      newSlotCrops[sourceIndex] = newSlotCrops[targetIndex];
+      newSlotCrops[targetIndex] = tempCrop;
+
+      updateSlide(currentSlide.id, { photoIds: newPhotoIds, slotCrops: newSlotCrops });
     }
 
     setDraggedPhotoIndex(null);
@@ -206,60 +247,92 @@ export function SlideEditor() {
             const isDragging = draggedPhotoIndex === index;
             const isDropTarget = dropTargetPhotoIndex === index;
             const canDrag = currentSlide.photoIds.length > 1 && photoId && photos[photoId];
+            const cropConfig = getSlotCropConfig(currentSlide.slotCrops, index);
+            const photo = photoId ? photos[photoId] : null;
 
             return (
-              <div
-                key={index}
-                draggable={!!canDrag}
-                onDragStart={canDrag ? (e) => handlePhotoDragStart(e, index) : undefined}
-                onDragOver={(e) => handlePhotoDragOver(e, index)}
-                onDragLeave={handlePhotoDragLeave}
-                onDrop={(e) => handlePhotoDrop(e, index)}
-                onDragEnd={handlePhotoDragEnd}
-                className={cn(
-                  `relative ${currentSlide.photoIds.length === 1 ? 'aspect-video' : 'aspect-square'} rounded-lg overflow-hidden border-2 transition-colors group`,
-                  isDropTarget && draggedPhotoIndex !== index ? 'border-primary border-dashed' : 'border-dashed border-muted-foreground/50',
-                  !isDragging && 'hover:border-primary',
-                  isDragging && 'opacity-50'
-                )}
-              >
-                {photoId && photos[photoId] ? (
-                  <>
-                    <img
-                      src={photos[photoId].thumbnail}
-                      alt=""
-                      className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => handleOpenPhotoPicker(index)}
-                    />
-                    {currentSlide.photoIds.length > 1 && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemovePhoto(index);
-                          }}
-                          className="absolute top-1 right-1 z-10 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3 text-white" />
-                        </button>
-                        <div className="absolute top-1 left-1 z-10 bg-black/50 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-                          <GripVertical className="h-3 w-3 text-white" />
-                        </div>
-                      </>
-                    )}
+              <div key={index} className="space-y-1">
+                <div
+                  draggable={!!canDrag}
+                  onDragStart={canDrag ? (e) => handlePhotoDragStart(e, index) : undefined}
+                  onDragOver={(e) => handlePhotoDragOver(e, index)}
+                  onDragLeave={handlePhotoDragLeave}
+                  onDrop={(e) => handlePhotoDrop(e, index)}
+                  onDragEnd={handlePhotoDragEnd}
+                  className={cn(
+                    `relative ${currentSlide.photoIds.length === 1 ? 'aspect-video' : 'aspect-square'} rounded-lg overflow-hidden border-2 transition-colors group`,
+                    isDropTarget && draggedPhotoIndex !== index ? 'border-primary border-dashed' : 'border-dashed border-muted-foreground/50',
+                    !isDragging && 'hover:border-primary',
+                    isDragging && 'opacity-50'
+                  )}
+                >
+                  {photo ? (
+                    <>
+                      <img
+                        src={photo.thumbnail}
+                        alt=""
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => handleOpenPhotoPicker(index)}
+                      />
+                      {currentSlide.photoIds.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemovePhoto(index);
+                            }}
+                            className="absolute top-1 right-1 z-10 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3 text-white" />
+                          </button>
+                          <div className="absolute top-1 left-1 z-10 bg-black/50 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-white" />
+                          </div>
+                        </>
+                      )}
+                      <div
+                        onClick={() => handleOpenPhotoPicker(index)}
+                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      >
+                        <ImagePlus className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`} />
+                      </div>
+                    </>
+                  ) : (
                     <div
                       onClick={() => handleOpenPhotoPicker(index)}
-                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      className="w-full h-full flex items-center justify-center text-muted-foreground cursor-pointer"
                     >
-                      <ImagePlus className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`} />
+                      <ImagePlus className={currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} />
                     </div>
-                  </>
-                ) : (
-                  <div
-                    onClick={() => handleOpenPhotoPicker(index)}
-                    className="w-full h-full flex items-center justify-center text-muted-foreground cursor-pointer"
-                  >
-                    <ImagePlus className={currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} />
+                  )}
+                </div>
+                {/* Crop controls */}
+                {photo && (
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-7 text-xs"
+                      onClick={() => handleToggleObjectFit(index)}
+                      title={cropConfig.objectFit === 'cover' ? 'Switch to Contain (show full image)' : 'Switch to Cover (fill slot)'}
+                    >
+                      {cropConfig.objectFit === 'cover' ? (
+                        <><Crop className="h-3 w-3 mr-1" />Cover</>
+                      ) : (
+                        <><Maximize className="h-3 w-3 mr-1" />Contain</>
+                      )}
+                    </Button>
+                    {cropConfig.objectFit === 'cover' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs px-2"
+                        onClick={() => handleOpenCropEditor(index)}
+                        title="Adjust crop position"
+                      >
+                        Adjust
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -341,6 +414,24 @@ export function SlideEditor() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Crop Position Editor Dialog */}
+      {cropEditorSlotIndex !== null && currentSlide.photoIds[cropEditorSlotIndex] && photos[currentSlide.photoIds[cropEditorSlotIndex]] && (
+        <CropPositionEditor
+          open={cropEditorOpen}
+          onOpenChange={setCropEditorOpen}
+          photo={photos[currentSlide.photoIds[cropEditorSlotIndex]]}
+          cropConfig={getSlotCropConfig(currentSlide.slotCrops, cropEditorSlotIndex)}
+          slotAspect={(() => {
+            const currentLayout = COLLAGE_LAYOUTS.find((l) => l.id === currentSlide.layoutId);
+            if (!currentLayout) return 16 / 9;
+            const slot = currentLayout.slots[cropEditorSlotIndex];
+            if (!slot) return 16 / 9;
+            return (slot.width / slot.height) * (16 / 9);
+          })()}
+          onUpdate={handleCropUpdate}
+        />
+      )}
     </div>
   );
 }

@@ -24,6 +24,21 @@ export interface TransitionConfig {
   duration: number; // in frames (30fps)
 }
 
+// Crop configuration for a photo slot
+export type ObjectFit = 'cover' | 'contain';
+
+export interface SlotCropConfig {
+  objectFit: ObjectFit;
+  offsetX: number; // -1 to 1, 0 = centered
+  offsetY: number; // -1 to 1, 0 = centered
+}
+
+export const DEFAULT_SLOT_CROP: SlotCropConfig = {
+  objectFit: 'cover',
+  offsetX: 0,
+  offsetY: 0,
+};
+
 // Collage layout definitions
 export interface LayoutSlot {
   id: string;
@@ -47,6 +62,7 @@ export interface Slide {
   id: string;
   layoutId: string;
   photoIds: string[]; // Must match layout photoCount
+  slotCrops?: SlotCropConfig[]; // Optional crop config per slot, parallel to photoIds
   duration: number; // in frames at 30fps
   transition: TransitionConfig;
 }

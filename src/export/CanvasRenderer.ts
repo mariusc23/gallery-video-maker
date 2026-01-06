@@ -1,4 +1,6 @@
-import type { Photo, Slide, CollageLayout } from '@/types';
+import type { Photo, Slide, CollageLayout, SlotCropConfig } from '@/types';
+import { DEFAULT_SLOT_CROP } from '@/types';
+import { calculateCropSourceRect, calculateContainDestRect } from '@/utils/cropUtils';
 
 export class CanvasRenderer {
   private canvas: HTMLCanvasElement;
@@ -52,37 +54,48 @@ export class CanvasRenderer {
       const slotWidth = (slot.width / 100) * this.width;
       const slotHeight = (slot.height / 100) * this.height;
 
-      // Draw with cover fit
-      this.drawImageCover(img, slotX, slotY, slotWidth, slotHeight);
+      // Get crop config for this slot
+      const cropConfig = slide.slotCrops?.[idx] ?? DEFAULT_SLOT_CROP;
+
+      // Draw with crop config
+      this.drawImageWithCrop(img, slotX, slotY, slotWidth, slotHeight, cropConfig);
     });
   }
 
-  private drawImageCover(
+  private drawImageWithCrop(
     img: HTMLImageElement,
     x: number,
     y: number,
     targetWidth: number,
-    targetHeight: number
+    targetHeight: number,
+    cropConfig: SlotCropConfig
   ): void {
-    const imgAspect = img.width / img.height;
-    const targetAspect = targetWidth / targetHeight;
+    if (cropConfig.objectFit === 'contain') {
+      // Contain mode - show full image with letterboxing
+      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
+        cropConfig, img.width, img.height, targetWidth, targetHeight
+      );
+      const { destX, destY, destW, destH } = calculateContainDestRect(
+        img.width, img.height, targetWidth, targetHeight
+      );
 
-    let sourceX = 0;
-    let sourceY = 0;
-    let sourceW = img.width;
-    let sourceH = img.height;
-
-    if (imgAspect > targetAspect) {
-      // Image is wider - crop sides
-      sourceW = img.height * targetAspect;
-      sourceX = (img.width - sourceW) / 2;
+      this.ctx.drawImage(
+        img,
+        sourceX, sourceY, sourceW, sourceH,
+        x + destX, y + destY, destW, destH
+      );
     } else {
-      // Image is taller - crop top/bottom
-      sourceH = img.width / targetAspect;
-      sourceY = (img.height - sourceH) / 2;
-    }
+      // Cover mode with offset
+      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
+        cropConfig, img.width, img.height, targetWidth, targetHeight
+      );
 
-    this.ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, x, y, targetWidth, targetHeight);
+      this.ctx.drawImage(
+        img,
+        sourceX, sourceY, sourceW, sourceH,
+        x, y, targetWidth, targetHeight
+      );
+    }
   }
 
   getCanvas(): HTMLCanvasElement {
@@ -138,26 +151,52 @@ export class CanvasRenderer {
       const slotWidth = (slot.width / 100) * this.width;
       const slotHeight = (slot.height / 100) * this.height;
 
-      // Draw with cover fit
-      const imgAspect = img.width / img.height;
-      const targetAspect = slotWidth / slotHeight;
+      // Get crop config for this slot
+      const cropConfig = slide.slotCrops?.[idx] ?? DEFAULT_SLOT_CROP;
 
-      let sourceX = 0;
-      let sourceY = 0;
-      let sourceW = img.width;
-      let sourceH = img.height;
-
-      if (imgAspect > targetAspect) {
-        sourceW = img.height * targetAspect;
-        sourceX = (img.width - sourceW) / 2;
-      } else {
-        sourceH = img.width / targetAspect;
-        sourceY = (img.height - sourceH) / 2;
-      }
-
-      tempCtx.drawImage(img, sourceX, sourceY, sourceW, sourceH, slotX, slotY, slotWidth, slotHeight);
+      // Draw with crop config
+      this.drawImageWithCropToContext(
+        tempCtx, img, slotX, slotY, slotWidth, slotHeight, cropConfig
+      );
     });
 
     return tempCanvas;
+  }
+
+  private drawImageWithCropToContext(
+    ctx: CanvasRenderingContext2D,
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    targetWidth: number,
+    targetHeight: number,
+    cropConfig: SlotCropConfig
+  ): void {
+    if (cropConfig.objectFit === 'contain') {
+      // Contain mode - show full image with letterboxing
+      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
+        cropConfig, img.width, img.height, targetWidth, targetHeight
+      );
+      const { destX, destY, destW, destH } = calculateContainDestRect(
+        img.width, img.height, targetWidth, targetHeight
+      );
+
+      ctx.drawImage(
+        img,
+        sourceX, sourceY, sourceW, sourceH,
+        x + destX, y + destY, destW, destH
+      );
+    } else {
+      // Cover mode with offset
+      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
+        cropConfig, img.width, img.height, targetWidth, targetHeight
+      );
+
+      ctx.drawImage(
+        img,
+        sourceX, sourceY, sourceW, sourceH,
+        x, y, targetWidth, targetHeight
+      );
+    }
   }
 }

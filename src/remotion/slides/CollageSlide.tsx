@@ -2,6 +2,7 @@ import { AbsoluteFill, Img } from 'remotion';
 import type { Slide } from '@/types';
 import { useGalleryStore } from '@/store/useGalleryStore';
 import { COLLAGE_LAYOUTS } from '@/data/layouts';
+import { getSlotCropConfig, getCropStyles } from '@/utils/cropUtils';
 
 interface CollageSlideProps {
   slide: Slide;
@@ -56,6 +57,10 @@ export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {
           );
         }
 
+        const cropConfig = getSlotCropConfig(slide.slotCrops, idx);
+        const slotAspect = (slot.width / slot.height) * (16 / 9);
+        const cropStyles = getCropStyles(cropConfig, photo.aspectRatio, slotAspect);
+
         return (
           <div
             key={slot.id}
@@ -67,15 +72,12 @@ export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {
               height: `${slot.height}%`,
               overflow: 'hidden',
               zIndex: slot.zIndex || 0,
+              backgroundColor: '#000',
             }}
           >
             <Img
               src={photo.url}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
+              style={cropStyles}
             />
           </div>
         );

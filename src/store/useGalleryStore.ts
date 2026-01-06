@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { Photo, Slide } from '@/types';
+import type { Photo, Slide, SlotCropConfig } from '@/types';
+import { DEFAULT_SLOT_CROP } from '@/types';
 import { createPhotoFromFile, generateId, revokePhotoUrls } from '@/utils/photoUtils';
 import { COLLAGE_LAYOUTS } from '@/data/layouts';
 
@@ -25,6 +26,7 @@ interface GalleryStore {
   ) => void;
   addPhotosToSelectedSlides: (photoIds: string[]) => void;
   updateSlide: (slideId: string, updates: Partial<Slide>) => void;
+  updateSlotCrop: (slideId: string, slotIndex: number, cropUpdates: Partial<SlotCropConfig>) => void;
   deleteSlides: (slideIds: string[]) => void;
   reorderSlides: (oldIndex: number, newIndex: number) => void;
   reorderSelectedSlides: (targetIndex: number) => void;
@@ -199,6 +201,29 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       slides: state.slides.map((slide) =>
         slide.id === slideId ? ({ ...slide, ...updates } as Slide) : slide
       ),
+    }));
+  },
+
+  updateSlotCrop: (slideId: string, slotIndex: number, cropUpdates: Partial<SlotCropConfig>) => {
+    set((state) => ({
+      slides: state.slides.map((slide) => {
+        if (slide.id !== slideId) return slide;
+
+        // Initialize slotCrops array if needed
+        const slotCrops = slide.slotCrops
+          ? [...slide.slotCrops]
+          : Array(slide.photoIds.length).fill(null).map(() => ({ ...DEFAULT_SLOT_CROP }));
+
+        // Extend array if needed
+        while (slotCrops.length <= slotIndex) {
+          slotCrops.push({ ...DEFAULT_SLOT_CROP });
+        }
+
+        // Update the specific slot
+        slotCrops[slotIndex] = { ...slotCrops[slotIndex], ...cropUpdates };
+
+        return { ...slide, slotCrops };
+      }),
     }));
   },
 

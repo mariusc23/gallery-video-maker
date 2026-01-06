@@ -1,0 +1,134 @@
+import type { SlotCropConfig } from '@/types';
+import { DEFAULT_SLOT_CROP } from '@/types';
+
+/**
+ * Get crop config for a specific slot, with fallback to defaults
+ */
+export function getSlotCropConfig(
+  slotCrops: SlotCropConfig[] | undefined,
+  slotIndex: number
+): SlotCropConfig {
+  return slotCrops?.[slotIndex] ?? DEFAULT_SLOT_CROP;
+}
+
+/**
+ * Calculate CSS styles for rendering a photo with crop config (for preview)
+ */
+export function getCropStyles(
+  cropConfig: SlotCropConfig,
+  _photoAspect: number,
+  _slotAspect: number
+): React.CSSProperties {
+  if (cropConfig.objectFit === 'contain') {
+    return {
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
+    };
+  }
+
+  // Cover mode with offset
+  // Convert offset from -1..1 to percentage for object-position
+  // At 0: 50% (centered)
+  // At -1: 0% (show left/top edge)
+  // At +1: 100% (show right/bottom edge)
+  const posX = 50 + cropConfig.offsetX * 50;
+  const posY = 50 + cropConfig.offsetY * 50;
+
+  return {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    objectPosition: `${posX}% ${posY}%`,
+  };
+}
+
+/**
+ * Calculate source rectangle for canvas drawImage with crop config
+ */
+export function calculateCropSourceRect(
+  cropConfig: SlotCropConfig,
+  imgWidth: number,
+  imgHeight: number,
+  targetWidth: number,
+  targetHeight: number
+): { sourceX: number; sourceY: number; sourceW: number; sourceH: number } {
+  const imgAspect = imgWidth / imgHeight;
+  const targetAspect = targetWidth / targetHeight;
+
+  if (cropConfig.objectFit === 'contain') {
+    // For contain, we draw the full image
+    return {
+      sourceX: 0,
+      sourceY: 0,
+      sourceW: imgWidth,
+      sourceH: imgHeight,
+    };
+  }
+
+  // Cover mode
+  let sourceW: number;
+  let sourceH: number;
+  let sourceX: number;
+  let sourceY: number;
+
+  if (imgAspect > targetAspect) {
+    // Image is wider - crop sides
+    sourceH = imgHeight;
+    sourceW = imgHeight * targetAspect;
+
+    // Available pan range is (imgWidth - sourceW)
+    const maxOffsetX = (imgWidth - sourceW) / 2;
+    sourceX = (imgWidth - sourceW) / 2 - cropConfig.offsetX * maxOffsetX;
+    sourceY = 0;
+  } else {
+    // Image is taller - crop top/bottom
+    sourceW = imgWidth;
+    sourceH = imgWidth / targetAspect;
+
+    // Available pan range is (imgHeight - sourceH)
+    const maxOffsetY = (imgHeight - sourceH) / 2;
+    sourceX = 0;
+    sourceY = (imgHeight - sourceH) / 2 - cropConfig.offsetY * maxOffsetY;
+  }
+
+  return { sourceX, sourceY, sourceW, sourceH };
+}
+
+/**
+ * Calculate destination rectangle for 'contain' mode (letterboxing)
+ */
+export function calculateContainDestRect(
+  imgWidth: number,
+  imgHeight: number,
+  targetWidth: number,
+  targetHeight: number
+): { destX: number; destY: number; destW: number; destH: number } {
+  const imgAspect = imgWidth / imgHeight;
+  const targetAspect = targetWidth / targetHeight;
+
+  let destW: number;
+  let destH: number;
+
+  if (imgAspect > targetAspect) {
+    // Image is wider - fit to width, letterbox top/bottom
+    destW = targetWidth;
+    destH = targetWidth / imgAspect;
+  } else {
+    // Image is taller - fit to height, letterbox sides
+    destH = targetHeight;
+    destW = targetHeight * imgAspect;
+  }
+
+  const destX = (targetWidth - destW) / 2;
+  const destY = (targetHeight - destH) / 2;
+
+  return { destX, destY, destW, destH };
+}
+
+/**
+ * Clamp offset values to valid range
+ */
+export function clampOffset(offset: number): number {
+  return Math.max(-1, Math.min(1, offset));
+}
