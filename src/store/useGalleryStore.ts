@@ -95,20 +95,36 @@ function getInitialSlotCrop(
 export const useGalleryStore = create<GalleryStore>((set, get) => ({
   // Photo actions
   addPhotos: async (files: File[]) => {
+    const { photos: existingPhotos } = get();
     const newPhotos: Photo[] = [];
 
-    // Set initial progress
-    set({ uploadProgress: { completed: 0, total: files.length } });
+    // Create a set of existing file signatures (name + size) for deduplication
+    const existingSignatures = new Set(
+      Object.values(existingPhotos).map((p) => `${p.file.name}:${p.file.size}`)
+    );
 
-    for (let i = 0; i < files.length; i++) {
+    // Filter out duplicate files
+    const uniqueFiles = files.filter((file) => {
+      const signature = `${file.name}:${file.size}`;
+      return !existingSignatures.has(signature);
+    });
+
+    if (uniqueFiles.length === 0) {
+      return [];
+    }
+
+    // Set initial progress
+    set({ uploadProgress: { completed: 0, total: uniqueFiles.length } });
+
+    for (let i = 0; i < uniqueFiles.length; i++) {
       try {
-        const photo = await createPhotoFromFile(files[i]);
+        const photo = await createPhotoFromFile(uniqueFiles[i]);
         newPhotos.push(photo);
       } catch (error) {
         console.error("Failed to process photo:", error);
       }
       // Update progress after each photo
-      set({ uploadProgress: { completed: i + 1, total: files.length } });
+      set({ uploadProgress: { completed: i + 1, total: uniqueFiles.length } });
     }
 
     set((state) => {
