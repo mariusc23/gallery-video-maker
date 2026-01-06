@@ -79,6 +79,43 @@ export function SlideEditor() {
   };
 
   const handleLayoutChange = (value: string) => {
+    // Handle conversion to single photo
+    if (value === "single") {
+      if (currentSlide.type === "collage") {
+        // Convert collage to single, use first photo
+        const firstPhotoId = currentSlide.photoIds.find((id) => id && id !== "");
+        if (firstPhotoId) {
+          updateSlide(currentSlide.id, {
+            type: "single",
+            photoId: firstPhotoId,
+            duration: currentSlide.duration,
+            transition: currentSlide.transition,
+          });
+        }
+      }
+      return;
+    }
+
+    // Handle conversion from single to collage
+    if (currentSlide.type === "single") {
+      const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === value);
+      if (newLayout) {
+        const photoIds = [
+          currentSlide.photoId,
+          ...Array(newLayout.photoCount - 1).fill(""),
+        ];
+        updateSlide(currentSlide.id, {
+          type: "collage",
+          layoutId: value,
+          photoIds,
+          duration: currentSlide.duration,
+          transition: currentSlide.transition,
+        });
+      }
+      return;
+    }
+
+    // Handle collage to collage layout change
     if (currentSlide.type === "collage") {
       const newLayout = COLLAGE_LAYOUTS.find((l) => l.id === value);
       if (newLayout) {
@@ -136,12 +173,37 @@ export function SlideEditor() {
     }
   };
 
+  // Get current layout (use 'single' for single slides)
+  const currentLayoutId =
+    currentSlide.type === "single" ? "single" : currentSlide.layoutId;
+
   return (
     <div className="p-6 space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">Slide Editor</h2>
         <p className="text-sm text-muted-foreground">
           {currentSlide.type === "single" ? "Single Photo" : "Collage"}
+        </p>
+      </div>
+
+      {/* Layout Control */}
+      <div className="space-y-2">
+        <Label>Layout</Label>
+        <Select value={currentLayoutId} onValueChange={handleLayoutChange}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="single">Single Photo</SelectItem>
+            {COLLAGE_LAYOUTS.map((layout) => (
+              <SelectItem key={layout.id} value={layout.id}>
+                {layout.name} ({layout.photoCount} photos)
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Choose slide layout pattern
         </p>
       </div>
 
@@ -255,31 +317,6 @@ export function SlideEditor() {
           </SelectContent>
         </Select>
       </div>
-
-      {/* Layout Control (Collage only) */}
-      {currentSlide.type === "collage" && (
-        <div className="space-y-2">
-          <Label>Layout</Label>
-          <Select
-            value={currentSlide.layoutId}
-            onValueChange={handleLayoutChange}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {COLLAGE_LAYOUTS.map((layout) => (
-                <SelectItem key={layout.id} value={layout.id}>
-                  {layout.name} ({layout.photoCount} photos)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Change the collage layout pattern
-          </p>
-        </div>
-      )}
 
       {/* Photo Picker Dialog */}
       <Dialog open={photoPickerOpen} onOpenChange={setPhotoPickerOpen}>
