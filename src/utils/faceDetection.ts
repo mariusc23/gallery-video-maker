@@ -45,7 +45,7 @@ export async function detectFaceCenter(
       x: totalX / count / img.width,
       y: totalY / count / img.height,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.warn("Face detection failed:", error);
     return null;
   }
@@ -75,7 +75,7 @@ async function getDetector(): Promise<FaceDetector | null> {
       });
 
       return faceDetector;
-    } catch (error) {
+    } catch (error: unknown) {
       console.warn("Failed to initialize face detector:", error);
       return null;
     }

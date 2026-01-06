@@ -99,7 +99,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       try {
         const photo = await createPhotoFromFile(file);
         newPhotos.push(photo);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to process photo:", error);
       }
     }

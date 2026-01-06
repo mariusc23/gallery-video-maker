@@ -45,7 +45,7 @@ export async function createPhotoFromFile(file: File): Promise<Photo> {
       url,
       width: img.width,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     // Clean up object URL if there's an error
     URL.revokeObjectURL(url);
     throw error;
@@ -101,7 +101,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
     img.src = url;
   });
 }

@@ -12,7 +12,16 @@ import type {
 
 import { VideoExporter } from "./VideoExporter";
 
-export function useExport() {
+interface UseExportReturn {
+  cancelExport: () => void;
+  canExport: boolean;
+  isExporting: boolean;
+  progress: ExportProgress | null;
+  resetProgress: () => void;
+  startExport: (resolution: ExportResolution, fps: ExportFps) => Promise<void>;
+}
+
+export function useExport(): UseExportReturn {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const exporterRef = useRef<null | VideoExporter>(null);
@@ -60,11 +69,13 @@ export function useExport() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      } catch (error) {
-        if ((error as Error).message !== "Export cancelled") {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        if (errorMessage !== "Export cancelled") {
           setProgress({
             currentFrame: 0,
-            error: (error as Error).message,
+            error: errorMessage,
             estimatedTimeRemaining: null,
             percentage: 0,
             status: "error",

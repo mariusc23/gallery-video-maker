@@ -170,7 +170,13 @@ export class VideoExporter {
         });
         resolve(blob);
       };
-      this.mediaRecorder!.onerror = (e) => reject(e);
+      this.mediaRecorder!.onerror = (event: Event) => {
+        const error =
+          event instanceof ErrorEvent
+            ? event.error
+            : new Error("MediaRecorder error");
+        reject(error);
+      };
       this.mediaRecorder!.stop();
     });
   }
