@@ -1,7 +1,16 @@
 import { useGalleryStore } from '@/store/useGalleryStore';
+import { cn } from '@/lib/utils';
 
 export function TimelineSidebar() {
   const slides = useGalleryStore((state) => state.slides);
+  const currentSlideId = useGalleryStore((state) => state.currentSlideId);
+  const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
+  const selectSlide = useGalleryStore((state) => state.selectSlide);
+
+  const handleSlideClick = (slideId: string, event: React.MouseEvent) => {
+    const isMultiSelect = event.metaKey || event.ctrlKey;
+    selectSlide(slideId, isMultiSelect);
+  };
 
   return (
     <div className="p-4 h-full flex flex-col">
@@ -21,21 +30,32 @@ export function TimelineSidebar() {
           </div>
         ) : (
           <div className="space-y-2">
-            {slides.map((slide, index) => (
-              <div
-                key={slide.id}
-                className="bg-background border rounded p-2 text-xs"
-              >
-                <div className="font-medium">
-                  Slide {index + 1}
+            {slides.map((slide, index) => {
+              const isSelected = selectedSlideIds.has(slide.id);
+              const isCurrent = currentSlideId === slide.id;
+
+              return (
+                <div
+                  key={slide.id}
+                  onClick={(e) => handleSlideClick(slide.id, e)}
+                  className={cn(
+                    'bg-background border rounded p-2 text-xs cursor-pointer transition-colors',
+                    isCurrent && 'border-primary ring-2 ring-primary ring-offset-1',
+                    isSelected && !isCurrent && 'border-primary',
+                    !isSelected && !isCurrent && 'hover:border-muted-foreground'
+                  )}
+                >
+                  <div className="font-medium">
+                    Slide {index + 1}
+                  </div>
+                  <div className="text-muted-foreground">
+                    {slide.type === 'single' ? 'Single Photo' : 'Collage'}
+                    {' · '}
+                    {(slide.duration / 30).toFixed(1)}s
+                  </div>
                 </div>
-                <div className="text-muted-foreground">
-                  {slide.type === 'single' ? 'Single Photo' : 'Collage'}
-                  {' · '}
-                  {(slide.duration / 30).toFixed(1)}s
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

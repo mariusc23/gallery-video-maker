@@ -63,11 +63,6 @@ export function MediaLibraryDialog({
     setSelectedPhotoIds(new Set());
   };
 
-  // Filter layouts based on selected photo count
-  const availableLayouts = COLLAGE_LAYOUTS.filter(
-    (layout) => layout.photoCount === selectedPhotoIds.size
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -115,25 +110,16 @@ export function MediaLibraryDialog({
                       <SelectValue placeholder="Select a layout or create individual slides" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableLayouts.length > 0 ? (
-                        availableLayouts.map((layout) => (
-                          <SelectItem key={layout.id} value={layout.id}>
-                            {layout.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="_none" disabled>
-                          No layouts available for {selectedPhotoIds.size}{' '}
-                          photos
+                      {COLLAGE_LAYOUTS.map((layout) => (
+                        <SelectItem key={layout.id} value={layout.id}>
+                          {layout.name} ({layout.photoCount} photos)
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
-                  {availableLayouts.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Individual slides will be created for each photo
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Photos will be divided into multiple slides based on the layout
+                  </p>
                 </div>
               )}
 

@@ -1,4 +1,6 @@
+import { Player } from '@remotion/player';
 import { useGalleryStore } from '@/store/useGalleryStore';
+import { VideoComposition } from '@/remotion/VideoComposition';
 
 export function PreviewPanel() {
   const slides = useGalleryStore((state) => state.slides);
@@ -13,7 +15,7 @@ export function PreviewPanel() {
         </p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center bg-black/5 rounded-lg">
+      <div className="flex-1 flex items-center justify-center bg-black rounded-lg overflow-hidden">
         {slides.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground">
             Preview will appear here
@@ -21,11 +23,18 @@ export function PreviewPanel() {
             when you add slides
           </div>
         ) : (
-          <div className="text-center text-sm text-muted-foreground">
-            Video preview
-            <br />
-            (Remotion player will be integrated here)
-          </div>
+          <Player
+            component={VideoComposition}
+            durationInFrames={totalDuration || 90}
+            compositionWidth={1920}
+            compositionHeight={1080}
+            fps={30}
+            controls
+            style={{
+              width: '100%',
+              maxHeight: '100%',
+            }}
+          />
         )}
       </div>
     </div>
