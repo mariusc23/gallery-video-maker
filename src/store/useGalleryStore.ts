@@ -62,6 +62,8 @@ interface GalleryStore {
     slotIndex: number,
     cropUpdates: Partial<SlotCropConfig>
   ) => void;
+  // Upload progress
+  uploadProgress: null | { completed: number; total: number };
 }
 
 /**
@@ -95,13 +97,18 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
   addPhotos: async (files: File[]) => {
     const newPhotos: Photo[] = [];
 
-    for (const file of files) {
+    // Set initial progress
+    set({ uploadProgress: { completed: 0, total: files.length } });
+
+    for (let i = 0; i < files.length; i++) {
       try {
-        const photo = await createPhotoFromFile(file);
+        const photo = await createPhotoFromFile(files[i]);
         newPhotos.push(photo);
       } catch (error) {
         console.error("Failed to process photo:", error);
       }
+      // Update progress after each photo
+      set({ uploadProgress: { completed: i + 1, total: files.length } });
     }
 
     set((state) => {
@@ -109,7 +116,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       newPhotos.forEach((photo) => {
         photos[photo.id] = photo;
       });
-      return { photos };
+      return { photos, uploadProgress: null };
     });
 
     // Return the IDs of newly added photos
@@ -641,4 +648,6 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       }),
     }));
   },
+
+  uploadProgress: null,
 }));

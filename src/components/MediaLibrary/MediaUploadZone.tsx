@@ -1,6 +1,7 @@
-import { Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useGalleryStore } from "@/store/useGalleryStore";
 
@@ -12,6 +13,7 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const addPhotos = useGalleryStore((state) => state.addPhotos);
+  const uploadProgress = useGalleryStore((state) => state.uploadProgress);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -81,17 +83,35 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
         ref={inputRef}
         type="file"
       />
-      <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-      {isDragActive ? (
-        <p className="text-sm font-medium">Drop images here...</p>
+      {uploadProgress ? (
+        <>
+          <Loader2 className="text-muted-foreground mx-auto mb-4 h-12 w-12 animate-spin" />
+          <p className="mb-3 text-sm font-medium">
+            Processing {uploadProgress.completed} of {uploadProgress.total}{" "}
+            photos...
+          </p>
+          <Progress
+            className="mx-auto w-48"
+            value={Math.round(
+              (uploadProgress.completed / uploadProgress.total) * 100
+            )}
+          />
+        </>
       ) : (
         <>
-          <p className="mb-1 text-sm font-medium">
-            Drag & drop images here, or click to select
-          </p>
-          <p className="text-muted-foreground text-xs">
-            PNG, JPG, GIF, WEBP supported
-          </p>
+          <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+          {isDragActive ? (
+            <p className="text-sm font-medium">Drop images here...</p>
+          ) : (
+            <>
+              <p className="mb-1 text-sm font-medium">
+                Drag & drop images here, or click to select
+              </p>
+              <p className="text-muted-foreground text-xs">
+                PNG, JPG, GIF, WEBP supported
+              </p>
+            </>
+          )}
         </>
       )}
     </div>

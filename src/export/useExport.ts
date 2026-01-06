@@ -61,7 +61,9 @@ export function useExport() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       } catch (error) {
-        if ((error as Error).message !== "Export cancelled") {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        if (errorMessage !== "Export cancelled") {
           setProgress({
             currentFrame: 0,
             error: (error as Error).message,
