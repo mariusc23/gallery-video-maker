@@ -8,8 +8,15 @@ import { MediaLibraryDialog } from '@/components/MediaLibrary/MediaLibraryDialog
 
 function App() {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+  const [initialSelectedPhotoIds, setInitialSelectedPhotoIds] = useState<string[]>([]);
 
   const handleOpenMediaLibrary = () => {
+    setInitialSelectedPhotoIds([]);
+    setIsMediaLibraryOpen(true);
+  };
+
+  const handleOpenMediaLibraryWithPhotos = (photoIds: string[]) => {
+    setInitialSelectedPhotoIds(photoIds);
     setIsMediaLibraryOpen(true);
   };
 
@@ -25,13 +32,14 @@ function App() {
         onExport={handleExport}
       />
       <MainLayout
-        timeline={<TimelineSidebar />}
+        timeline={<TimelineSidebar onOpenMediaLibraryWithPhotos={handleOpenMediaLibraryWithPhotos} />}
         editor={<SlideEditor />}
         preview={<PreviewPanel />}
       />
       <MediaLibraryDialog
         open={isMediaLibraryOpen}
         onOpenChange={setIsMediaLibraryOpen}
+        initialSelectedPhotoIds={initialSelectedPhotoIds}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,17 +22,26 @@ import { COLLAGE_LAYOUTS } from '@/data/layouts';
 interface MediaLibraryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialSelectedPhotoIds?: string[];
 }
 
 export function MediaLibraryDialog({
   open,
   onOpenChange,
+  initialSelectedPhotoIds,
 }: MediaLibraryDialogProps) {
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(
     new Set()
   );
   const [selectedLayoutId, setSelectedLayoutId] = useState<string>('');
   const [lastClickedPhotoId, setLastClickedPhotoId] = useState<string | null>(null);
+
+  // Update selection when initialSelectedPhotoIds changes (e.g., when dialog opens with dropped photos)
+  useEffect(() => {
+    if (initialSelectedPhotoIds && initialSelectedPhotoIds.length > 0) {
+      setSelectedPhotoIds(new Set(initialSelectedPhotoIds));
+    }
+  }, [initialSelectedPhotoIds]);
 
   const photos = useGalleryStore((state) => state.photos);
   const photoList = Object.values(photos);
@@ -132,6 +141,15 @@ export function MediaLibraryDialog({
     onOpenChange(false);
   };
 
+  const handlePhotosUploaded = (photoIds: string[]) => {
+    // Add newly uploaded photos to selection
+    setSelectedPhotoIds((prev) => {
+      const next = new Set(prev);
+      photoIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -143,7 +161,7 @@ export function MediaLibraryDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          <MediaUploadZone />
+          <MediaUploadZone onPhotosUploaded={handlePhotosUploaded} />
 
           <MediaGrid
             selectedPhotoIds={selectedPhotoIds}

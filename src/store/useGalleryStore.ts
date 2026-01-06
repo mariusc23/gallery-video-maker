@@ -14,7 +14,7 @@ interface GalleryStore {
   fps: number;
 
   // Photo actions
-  addPhotos: (files: File[]) => Promise<void>;
+  addPhotos: (files: File[]) => Promise<string[]>;
   removePhotos: (photoIds: string[]) => void;
   getPhoto: (photoId: string) => Photo | undefined;
 
@@ -38,6 +38,7 @@ interface GalleryStore {
   // Selection actions
   selectSlide: (slideId: string, multi: boolean) => void;
   selectSlideRange: (slideId: string) => void;
+  selectAllSlides: () => void;
   toggleSlideSelection: (slideId: string) => void;
   clearSelection: () => void;
   setCurrentSlide: (slideId: string | null) => void;
@@ -81,6 +82,9 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       });
       return { photos };
     });
+
+    // Return the IDs of newly added photos
+    return newPhotos.map((photo) => photo.id);
   },
 
   removePhotos: (photoIds: string[]) => {
@@ -354,6 +358,19 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       return {
         selectedSlideIds,
         currentSlideId: slideId,
+      };
+    });
+  },
+
+  selectAllSlides: () => {
+    set((state) => {
+      const { slides } = state;
+      if (slides.length === 0) return state;
+
+      const selectedSlideIds = new Set(slides.map((s) => s.id));
+      return {
+        selectedSlideIds,
+        currentSlideId: state.currentSlideId || slides[0].id,
       };
     });
   },

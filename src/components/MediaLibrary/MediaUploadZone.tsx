@@ -3,7 +3,11 @@ import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGalleryStore } from '@/store/useGalleryStore';
 
-export function MediaUploadZone() {
+interface MediaUploadZoneProps {
+  onPhotosUploaded?: (photoIds: string[]) => void;
+}
+
+export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const addPhotos = useGalleryStore((state) => state.addPhotos);
@@ -35,14 +39,16 @@ export function MediaUploadZone() {
     );
 
     if (files.length > 0) {
-      await addPhotos(files);
+      const newPhotoIds = await addPhotos(files);
+      onPhotosUploaded?.(newPhotoIds);
     }
   };
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      await addPhotos(Array.from(files));
+      const newPhotoIds = await addPhotos(Array.from(files));
+      onPhotosUploaded?.(newPhotoIds);
       // Reset input so the same files can be selected again if needed
       e.target.value = '';
     }
