@@ -5,9 +5,11 @@ import { TimelineSidebar } from '@/components/Timeline/TimelineSidebar';
 import { SlideEditor } from '@/components/Editor/SlideEditor';
 import { PreviewPanel } from '@/components/Preview/PreviewPanel';
 import { MediaLibraryDialog } from '@/components/MediaLibrary/MediaLibraryDialog';
+import { ExportDialog } from '@/components/Export/ExportDialog';
 
 function App() {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [initialSelectedPhotoIds, setInitialSelectedPhotoIds] = useState<string[]>([]);
 
   const handleOpenMediaLibrary = () => {
@@ -21,8 +23,7 @@ function App() {
   };
 
   const handleExport = () => {
-    console.log('Export video');
-    // Will be implemented in Phase 9
+    setIsExportDialogOpen(true);
   };
 
   return (
@@ -40,6 +41,10 @@ function App() {
         open={isMediaLibraryOpen}
         onOpenChange={setIsMediaLibraryOpen}
         initialSelectedPhotoIds={initialSelectedPhotoIds}
+      />
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
       />
     </div>
   );
