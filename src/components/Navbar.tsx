@@ -1,4 +1,4 @@
-import { Download, Images } from "lucide-react";
+import { Download, FolderOpen, Images, Save } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -6,11 +6,20 @@ import { useGalleryStore } from "@/store/useGalleryStore";
 
 interface NavbarProps {
   onExport: () => void;
+  onLoadProject: () => void;
   onOpenMediaLibrary: () => void;
+  onSaveProject: () => void;
 }
 
-export function Navbar({ onExport, onOpenMediaLibrary }: NavbarProps) {
+export function Navbar({
+  onExport,
+  onLoadProject,
+  onOpenMediaLibrary,
+  onSaveProject,
+}: NavbarProps) {
   const uploadProgress = useGalleryStore((state) => state.uploadProgress);
+  const photos = useGalleryStore((state) => state.photos);
+  const canSave = Object.keys(photos).length > 0;
 
   const progressPercent = uploadProgress
     ? Math.round((uploadProgress.completed / uploadProgress.total) * 100)
@@ -33,6 +42,19 @@ export function Navbar({ onExport, onOpenMediaLibrary }: NavbarProps) {
         )}
 
         <div className="ml-auto flex gap-2">
+          <Button onClick={onLoadProject} size="sm" variant="ghost">
+            <FolderOpen className="mr-2 h-4 w-4" />
+            Load
+          </Button>
+          <Button
+            disabled={!canSave}
+            onClick={onSaveProject}
+            size="sm"
+            variant="ghost"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            Save
+          </Button>
           <Button onClick={onOpenMediaLibrary} variant="outline">
             <Images className="mr-2 h-4 w-4" />
             Media Library
