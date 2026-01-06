@@ -5,7 +5,7 @@ import type { Photo } from '@/types';
 interface MediaItemProps {
   photo: Photo;
   isSelected: boolean;
-  onToggle: () => void;
+  onToggle: (event: React.MouseEvent) => void;
 }
 
 export function MediaItem({ photo, isSelected, onToggle }: MediaItemProps) {
@@ -13,7 +13,7 @@ export function MediaItem({ photo, isSelected, onToggle }: MediaItemProps) {
     <div
       onClick={onToggle}
       className={cn(
-        'relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all',
+        'relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all select-none',
         isSelected
           ? 'border-primary ring-2 ring-primary ring-offset-2'
           : 'border-transparent hover:border-muted-foreground/50'

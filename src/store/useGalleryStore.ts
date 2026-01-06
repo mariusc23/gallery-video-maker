@@ -35,6 +35,7 @@ interface GalleryStore {
 
   // Selection actions
   selectSlide: (slideId: string, multi: boolean) => void;
+  selectSlideRange: (slideId: string) => void;
   toggleSlideSelection: (slideId: string) => void;
   clearSelection: () => void;
   setCurrentSlide: (slideId: string | null) => void;
@@ -239,6 +240,42 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
           currentSlideId: slideId,
         };
       }
+    });
+  },
+
+  selectSlideRange: (slideId: string) => {
+    set((state) => {
+      const { slides, currentSlideId } = state;
+
+      // If no current slide, just select the clicked one
+      if (!currentSlideId) {
+        return {
+          selectedSlideIds: new Set([slideId]),
+          currentSlideId: slideId,
+        };
+      }
+
+      // Find indices of current and clicked slides
+      const currentIndex = slides.findIndex((s) => s.id === currentSlideId);
+      const clickedIndex = slides.findIndex((s) => s.id === slideId);
+
+      if (currentIndex === -1 || clickedIndex === -1) {
+        return state;
+      }
+
+      // Select all slides between current and clicked (inclusive)
+      const startIndex = Math.min(currentIndex, clickedIndex);
+      const endIndex = Math.max(currentIndex, clickedIndex);
+      const selectedSlideIds = new Set<string>();
+
+      for (let i = startIndex; i <= endIndex; i++) {
+        selectedSlideIds.add(slides[i].id);
+      }
+
+      return {
+        selectedSlideIds,
+        currentSlideId: slideId,
+      };
     });
   },
 

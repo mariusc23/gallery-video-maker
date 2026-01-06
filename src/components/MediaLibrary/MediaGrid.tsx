@@ -3,7 +3,7 @@ import { MediaItem } from './MediaItem';
 
 interface MediaGridProps {
   selectedPhotoIds: Set<string>;
-  onTogglePhoto: (photoId: string) => void;
+  onTogglePhoto: (photoId: string, event?: React.MouseEvent) => void;
 }
 
 export function MediaGrid({
@@ -32,7 +32,7 @@ export function MediaGrid({
             key={photo.id}
             photo={photo}
             isSelected={selectedPhotoIds.has(photo.id)}
-            onToggle={() => onTogglePhoto(photo.id)}
+            onToggle={(event: React.MouseEvent) => onTogglePhoto(photo.id, event)}
           />
         ))}
       </div>

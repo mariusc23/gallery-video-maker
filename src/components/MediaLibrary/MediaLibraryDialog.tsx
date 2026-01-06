@@ -32,6 +32,10 @@ export function MediaLibraryDialog({
     new Set()
   );
   const [selectedLayoutId, setSelectedLayoutId] = useState<string>('');
+  const [lastClickedPhotoId, setLastClickedPhotoId] = useState<string | null>(null);
+
+  const photos = useGalleryStore((state) => state.photos);
+  const photoList = Object.values(photos);
 
   const createSlidesFromPhotos = useGalleryStore(
     (state) => state.createSlidesFromPhotos
@@ -44,23 +48,66 @@ export function MediaLibraryDialog({
     createSlidesFromPhotos(photoIds, selectedLayoutId || undefined);
     setSelectedPhotoIds(new Set());
     setSelectedLayoutId('');
+    setLastClickedPhotoId(null);
     onOpenChange(false);
   };
 
-  const handleTogglePhoto = (photoId: string) => {
-    setSelectedPhotoIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(photoId)) {
-        next.delete(photoId);
-      } else {
-        next.add(photoId);
+  const handleTogglePhoto = (photoId: string, event?: React.MouseEvent) => {
+    const isMultiSelect = event?.metaKey || event?.ctrlKey;
+    const isRangeSelect = event?.shiftKey;
+
+    // Prevent text selection when using modifier keys
+    if (isMultiSelect || isRangeSelect) {
+      event?.preventDefault();
+    }
+
+    if (isRangeSelect && lastClickedPhotoId) {
+      // Range selection
+      const currentIndex = photoList.findIndex((p) => p.id === photoId);
+      const lastIndex = photoList.findIndex((p) => p.id === lastClickedPhotoId);
+
+      if (currentIndex !== -1 && lastIndex !== -1) {
+        const startIndex = Math.min(currentIndex, lastIndex);
+        const endIndex = Math.max(currentIndex, lastIndex);
+
+        setSelectedPhotoIds((prev) => {
+          const next = new Set(prev);
+          for (let i = startIndex; i <= endIndex; i++) {
+            next.add(photoList[i].id);
+          }
+          return next;
+        });
       }
-      return next;
-    });
+    } else if (isMultiSelect) {
+      // Toggle individual selection
+      setSelectedPhotoIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(photoId)) {
+          next.delete(photoId);
+        } else {
+          next.add(photoId);
+        }
+        return next;
+      });
+      setLastClickedPhotoId(photoId);
+    } else {
+      // Single selection (toggle)
+      setSelectedPhotoIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(photoId)) {
+          next.delete(photoId);
+        } else {
+          next.add(photoId);
+        }
+        return next;
+      });
+      setLastClickedPhotoId(photoId);
+    }
   };
 
   const handleClearSelection = () => {
     setSelectedPhotoIds(new Set());
+    setLastClickedPhotoId(null);
   };
 
   return (
