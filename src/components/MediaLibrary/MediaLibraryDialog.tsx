@@ -36,9 +36,21 @@ export function MediaLibraryDialog({
 
   const photos = useGalleryStore((state) => state.photos);
   const photoList = Object.values(photos);
+  const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
+  const slides = useGalleryStore((state) => state.slides);
 
   const createSlidesFromPhotos = useGalleryStore(
     (state) => state.createSlidesFromPhotos
+  );
+  const addPhotosToSelectedSlides = useGalleryStore(
+    (state) => state.addPhotosToSelectedSlides
+  );
+
+  // Check if selected slides have collage slides with empty slots
+  const selectedSlides = slides.filter((s) => selectedSlideIds.has(s.id));
+  const hasCollageSlides = selectedSlides.some((s) => s.type === 'collage');
+  const hasEmptySlots = selectedSlides.some(
+    (s) => s.type === 'collage' && s.photoIds.some((id) => !id || id === '')
   );
 
   const handleCreateSlides = () => {
@@ -110,6 +122,16 @@ export function MediaLibraryDialog({
     setLastClickedPhotoId(null);
   };
 
+  const handleAddToSlides = () => {
+    const photoIds = Array.from(selectedPhotoIds);
+    if (photoIds.length === 0) return;
+
+    addPhotosToSelectedSlides(photoIds);
+    setSelectedPhotoIds(new Set());
+    setLastClickedPhotoId(null);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -170,9 +192,26 @@ export function MediaLibraryDialog({
                 </div>
               )}
 
-              <Button onClick={handleCreateSlides} className="w-full">
-                Create Slides
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleCreateSlides} className="flex-1">
+                  Create Slides
+                </Button>
+                {hasCollageSlides && (
+                  <Button
+                    onClick={handleAddToSlides}
+                    variant="secondary"
+                    className="flex-1"
+                    disabled={!hasEmptySlots}
+                  >
+                    Add to Selected Slides
+                  </Button>
+                )}
+              </div>
+              {hasCollageSlides && !hasEmptySlots && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Selected slides have no empty slots
+                </p>
+              )}
             </div>
           )}
         </div>

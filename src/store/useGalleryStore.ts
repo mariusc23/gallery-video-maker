@@ -23,6 +23,7 @@ interface GalleryStore {
     photoIds: string[],
     layoutId?: string
   ) => void;
+  addPhotosToSelectedSlides: (photoIds: string[]) => void;
   updateSlide: (slideId: string, updates: Partial<Slide>) => void;
   deleteSlides: (slideIds: string[]) => void;
   reorderSlides: (oldIndex: number, newIndex: number) => void;
@@ -178,6 +179,48 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
     set((state) => ({
       slides: [...state.slides, ...newSlides],
     }));
+  },
+
+  addPhotosToSelectedSlides: (photoIds: string[]) => {
+    set((state) => {
+      const { slides, selectedSlideIds } = state;
+      if (selectedSlideIds.size === 0 || photoIds.length === 0) {
+        return state;
+      }
+
+      const selectedSlides = slides.filter((s) => selectedSlideIds.has(s.id));
+      const updatedSlides = [...slides];
+
+      selectedSlides.forEach((slide) => {
+        const slideIndex = updatedSlides.findIndex((s) => s.id === slide.id);
+        if (slideIndex === -1) return;
+
+        if (slide.type === 'collage') {
+          // Add photos to collage, replacing empty slots first
+          const currentPhotoIds = [...slide.photoIds];
+          let photoIndex = 0;
+
+          // Fill empty slots first
+          for (let i = 0; i < currentPhotoIds.length && photoIndex < photoIds.length; i++) {
+            if (!currentPhotoIds[i] || currentPhotoIds[i] === '') {
+              currentPhotoIds[i] = photoIds[photoIndex];
+              photoIndex++;
+            }
+          }
+
+          // If there are still photos left and all slots are filled,
+          // we could expand to a larger layout or create new slides
+          // For now, just update with filled slots
+          updatedSlides[slideIndex] = {
+            ...slide,
+            photoIds: currentPhotoIds,
+          } as Slide;
+        }
+        // Single slides can't have photos added to them
+      });
+
+      return { slides: updatedSlides };
+    });
   },
 
   updateSlide: (slideId: string, updates: Partial<Slide>) => {
