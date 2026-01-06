@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import { BatchEditPanel } from "./BatchEditPanel";
-import { X, ImagePlus } from "lucide-react";
+import { X, ImagePlus, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TransitionType } from "@/types";
 
@@ -44,6 +44,8 @@ export function SlideEditor() {
   const [photoPickerSlotIndex, setPhotoPickerSlotIndex] = useState<
     number | null
   >(null);
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
+  const [dropTargetPhotoIndex, setDropTargetPhotoIndex] = useState<number | null>(null);
 
   const photoList = Object.values(photos);
 
@@ -127,6 +129,44 @@ export function SlideEditor() {
     updateSlide(currentSlide.id, { photoIds: newPhotoIds });
   };
 
+  const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedPhotoIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handlePhotoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropTargetPhotoIndex(index);
+  };
+
+  const handlePhotoDragLeave = () => {
+    setDropTargetPhotoIndex(null);
+  };
+
+  const handlePhotoDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    const sourceIndex = draggedPhotoIndex;
+
+    if (sourceIndex !== null && sourceIndex !== targetIndex) {
+      const newPhotoIds = [...currentSlide.photoIds];
+      // Swap the photos
+      const temp = newPhotoIds[sourceIndex];
+      newPhotoIds[sourceIndex] = newPhotoIds[targetIndex];
+      newPhotoIds[targetIndex] = temp;
+      updateSlide(currentSlide.id, { photoIds: newPhotoIds });
+    }
+
+    setDraggedPhotoIndex(null);
+    setDropTargetPhotoIndex(null);
+  };
+
+  const handlePhotoDragEnd = () => {
+    setDraggedPhotoIndex(null);
+    setDropTargetPhotoIndex(null);
+  };
+
   const layout = COLLAGE_LAYOUTS.find((l) => l.id === currentSlide.layoutId);
 
   return (
@@ -162,49 +202,71 @@ export function SlideEditor() {
       <div className="space-y-2">
         <Label>Photos</Label>
         <div className={currentSlide.photoIds.length === 1 ? "" : "grid grid-cols-2 gap-2"}>
-          {currentSlide.photoIds.map((photoId, index) => (
-            <div
-              key={index}
-              className={`relative ${currentSlide.photoIds.length === 1 ? 'aspect-video' : 'aspect-square'} rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:border-primary transition-colors group`}
-            >
-              {photoId && photos[photoId] ? (
-                <>
-                  <img
-                    src={photos[photoId].thumbnail}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onClick={() => handleOpenPhotoPicker(index)}
-                  />
-                  {currentSlide.photoIds.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemovePhoto(index);
-                      }}
-                      className="absolute top-1 z-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          {currentSlide.photoIds.map((photoId, index) => {
+            const isDragging = draggedPhotoIndex === index;
+            const isDropTarget = dropTargetPhotoIndex === index;
+            const canDrag = currentSlide.photoIds.length > 1 && photoId && photos[photoId];
+
+            return (
+              <div
+                key={index}
+                draggable={!!canDrag}
+                onDragStart={canDrag ? (e) => handlePhotoDragStart(e, index) : undefined}
+                onDragOver={(e) => handlePhotoDragOver(e, index)}
+                onDragLeave={handlePhotoDragLeave}
+                onDrop={(e) => handlePhotoDrop(e, index)}
+                onDragEnd={handlePhotoDragEnd}
+                className={cn(
+                  `relative ${currentSlide.photoIds.length === 1 ? 'aspect-video' : 'aspect-square'} rounded-lg overflow-hidden border-2 transition-colors group`,
+                  isDropTarget && draggedPhotoIndex !== index ? 'border-primary border-dashed' : 'border-dashed border-muted-foreground/50',
+                  !isDragging && 'hover:border-primary',
+                  isDragging && 'opacity-50'
+                )}
+              >
+                {photoId && photos[photoId] ? (
+                  <>
+                    <img
+                      src={photos[photoId].thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() => handleOpenPhotoPicker(index)}
+                    />
+                    {currentSlide.photoIds.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemovePhoto(index);
+                          }}
+                          className="absolute top-1 right-1 z-10 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3 text-white" />
+                        </button>
+                        <div className="absolute top-1 left-1 z-10 bg-black/50 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                          <GripVertical className="h-3 w-3 text-white" />
+                        </div>
+                      </>
+                    )}
+                    <div
+                      onClick={() => handleOpenPhotoPicker(index)}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                     >
-                      <X className="h-3 w-3 text-white" />
-                    </button>
-                  )}
+                      <ImagePlus className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`} />
+                    </div>
+                  </>
+                ) : (
                   <div
                     onClick={() => handleOpenPhotoPicker(index)}
-                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    className="w-full h-full flex items-center justify-center text-muted-foreground cursor-pointer"
                   >
-                    <ImagePlus className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`} />
+                    <ImagePlus className={currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} />
                   </div>
-                </>
-              ) : (
-                <div
-                  onClick={() => handleOpenPhotoPicker(index)}
-                  className="w-full h-full flex items-center justify-center text-muted-foreground"
-                >
-                  <ImagePlus className={currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} />
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
-        <p className="text-xs text-muted-foreground">Click to change photos</p>
+        <p className="text-xs text-muted-foreground">Click to change photos, drag to reorder</p>
       </div>
 
       {/* Duration Control */}
