@@ -18,6 +18,7 @@ export function TimelineSidebar({
   const selectSlideRange = useGalleryStore((state) => state.selectSlideRange);
   const setPlayheadFrame = useGalleryStore((state) => state.setPlayheadFrame);
   const reorderSlides = useGalleryStore((state) => state.reorderSlides);
+  const reorderSelectedSlides = useGalleryStore((state) => state.reorderSelectedSlides);
   const selectAllSlides = useGalleryStore((state) => state.selectAllSlides);
   const clearSelection = useGalleryStore((state) => state.clearSelection);
   const addPhotos = useGalleryStore((state) => state.addPhotos);
@@ -103,7 +104,13 @@ export function TimelineSidebar({
     const sourceIndex = draggedIndex;
 
     if (sourceIndex !== null && sourceIndex !== targetIndex) {
-      reorderSlides(sourceIndex, targetIndex);
+      const draggedSlide = slides[sourceIndex];
+      // If dragging a selected slide and multiple are selected, move all selected slides
+      if (selectedSlideIds.has(draggedSlide.id) && selectedSlideIds.size > 1) {
+        reorderSelectedSlides(targetIndex);
+      } else {
+        reorderSlides(sourceIndex, targetIndex);
+      }
     }
 
     setDraggedIndex(null);
@@ -181,7 +188,10 @@ export function TimelineSidebar({
             {slides.map((slide, index) => {
               const isSelected = selectedSlideIds.has(slide.id);
               const isCurrent = currentSlideId === slide.id;
-              const isDragging = draggedIndex === index;
+              // Show as dragging if this slide is dragged, or if it's selected and a selected slide is being dragged
+              const draggedSlide = draggedIndex !== null ? slides[draggedIndex] : null;
+              const isMultiDrag = draggedSlide && selectedSlideIds.has(draggedSlide.id) && selectedSlideIds.size > 1;
+              const isDragging = draggedIndex === index || (isMultiDrag && isSelected);
               const isDropTarget = dropTargetIndex === index;
 
               return (

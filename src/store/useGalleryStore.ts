@@ -27,6 +27,7 @@ interface GalleryStore {
   updateSlide: (slideId: string, updates: Partial<Slide>) => void;
   deleteSlides: (slideIds: string[]) => void;
   reorderSlides: (oldIndex: number, newIndex: number) => void;
+  reorderSelectedSlides: (targetIndex: number) => void;
 
   // Batch actions
   batchUpdateSlides: (
@@ -221,6 +222,44 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
       const [movedSlide] = slides.splice(oldIndex, 1);
       slides.splice(newIndex, 0, movedSlide);
       return { slides };
+    });
+  },
+
+  reorderSelectedSlides: (targetIndex: number) => {
+    set((state) => {
+      const { slides, selectedSlideIds } = state;
+      if (selectedSlideIds.size === 0) return state;
+
+      // Separate selected and non-selected slides, preserving their relative order
+      const selectedSlides: typeof slides = [];
+      const nonSelectedSlides: typeof slides = [];
+
+      slides.forEach((slide) => {
+        if (selectedSlideIds.has(slide.id)) {
+          selectedSlides.push(slide);
+        } else {
+          nonSelectedSlides.push(slide);
+        }
+      });
+
+      // Find how many non-selected slides come before the target
+      let insertPosition = 0;
+      let slidesBeforeTarget = 0;
+      for (let i = 0; i < slides.length && slidesBeforeTarget < targetIndex; i++) {
+        if (!selectedSlideIds.has(slides[i].id)) {
+          insertPosition++;
+        }
+        slidesBeforeTarget++;
+      }
+
+      // Clamp insert position
+      insertPosition = Math.min(insertPosition, nonSelectedSlides.length);
+
+      // Insert selected slides at the target position
+      const newSlides = [...nonSelectedSlides];
+      newSlides.splice(insertPosition, 0, ...selectedSlides);
+
+      return { slides: newSlides };
     });
   },
 
