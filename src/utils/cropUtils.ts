@@ -1,44 +1,36 @@
 import type { SlotCropConfig } from "@/types";
+
 import { DEFAULT_SLOT_CROP } from "@/types";
 
 /**
- * Get crop config for a specific slot, with fallback to defaults
+ * Calculate destination rectangle for 'contain' mode (letterboxing)
  */
-export function getSlotCropConfig(
-  slotCrops: SlotCropConfig[] | undefined,
-  slotIndex: number
-): SlotCropConfig {
-  return slotCrops?.[slotIndex] ?? DEFAULT_SLOT_CROP;
-}
+export function calculateContainDestRect(
+  imgWidth: number,
+  imgHeight: number,
+  targetWidth: number,
+  targetHeight: number
+): { destH: number; destW: number; destX: number; destY: number; } {
+  const imgAspect = imgWidth / imgHeight;
+  const targetAspect = targetWidth / targetHeight;
 
-/**
- * Calculate CSS styles for rendering a photo with crop config (for preview)
- */
-export function getCropStyles(
-  cropConfig: SlotCropConfig
-): React.CSSProperties {
-  if (cropConfig.objectFit === "contain") {
-    return {
-      width: "100%",
-      height: "100%",
-      objectFit: "contain",
-    };
+  let destW: number;
+  let destH: number;
+
+  if (imgAspect > targetAspect) {
+    // Image is wider - fit to width, letterbox top/bottom
+    destW = targetWidth;
+    destH = targetWidth / imgAspect;
+  } else {
+    // Image is taller - fit to height, letterbox sides
+    destH = targetHeight;
+    destW = targetHeight * imgAspect;
   }
 
-  // Cover mode with offset
-  // Convert offset from -1..1 to percentage for object-position
-  // At 0: 50% (centered)
-  // At -1: 0% (show left/top edge)
-  // At +1: 100% (show right/bottom edge)
-  const posX = 50 + cropConfig.offsetX * 50;
-  const posY = 50 + cropConfig.offsetY * 50;
+  const destX = (targetWidth - destW) / 2;
+  const destY = (targetHeight - destH) / 2;
 
-  return {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    objectPosition: `${posX}% ${posY}%`,
-  };
+  return { destH, destW, destX, destY };
 }
 
 /**
@@ -50,17 +42,17 @@ export function calculateCropSourceRect(
   imgHeight: number,
   targetWidth: number,
   targetHeight: number
-): { sourceX: number; sourceY: number; sourceW: number; sourceH: number } {
+): { sourceH: number; sourceW: number; sourceX: number; sourceY: number; } {
   const imgAspect = imgWidth / imgHeight;
   const targetAspect = targetWidth / targetHeight;
 
   if (cropConfig.objectFit === "contain") {
     // For contain, we draw the full image
     return {
+      sourceH: imgHeight,
+      sourceW: imgWidth,
       sourceX: 0,
       sourceY: 0,
-      sourceW: imgWidth,
-      sourceH: imgHeight,
     };
   }
 
@@ -90,45 +82,7 @@ export function calculateCropSourceRect(
     sourceY = (imgHeight - sourceH) / 2 - cropConfig.offsetY * maxOffsetY;
   }
 
-  return { sourceX, sourceY, sourceW, sourceH };
-}
-
-/**
- * Calculate destination rectangle for 'contain' mode (letterboxing)
- */
-export function calculateContainDestRect(
-  imgWidth: number,
-  imgHeight: number,
-  targetWidth: number,
-  targetHeight: number
-): { destX: number; destY: number; destW: number; destH: number } {
-  const imgAspect = imgWidth / imgHeight;
-  const targetAspect = targetWidth / targetHeight;
-
-  let destW: number;
-  let destH: number;
-
-  if (imgAspect > targetAspect) {
-    // Image is wider - fit to width, letterbox top/bottom
-    destW = targetWidth;
-    destH = targetWidth / imgAspect;
-  } else {
-    // Image is taller - fit to height, letterbox sides
-    destH = targetHeight;
-    destW = targetHeight * imgAspect;
-  }
-
-  const destX = (targetWidth - destW) / 2;
-  const destY = (targetHeight - destH) / 2;
-
-  return { destX, destY, destW, destH };
-}
-
-/**
- * Clamp offset values to valid range
- */
-export function clampOffset(offset: number): number {
-  return Math.max(-1, Math.min(1, offset));
+  return { sourceH, sourceW, sourceX, sourceY };
 }
 
 /**
@@ -159,4 +113,51 @@ export function calculateFaceCropOffset(
     offsetX: clampOffset(offsetX),
     offsetY: clampOffset(offsetY),
   };
+}
+
+/**
+ * Clamp offset values to valid range
+ */
+export function clampOffset(offset: number): number {
+  return Math.max(-1, Math.min(1, offset));
+}
+
+/**
+ * Calculate CSS styles for rendering a photo with crop config (for preview)
+ */
+export function getCropStyles(
+  cropConfig: SlotCropConfig
+): React.CSSProperties {
+  if (cropConfig.objectFit === "contain") {
+    return {
+      height: "100%",
+      objectFit: "contain",
+      width: "100%",
+    };
+  }
+
+  // Cover mode with offset
+  // Convert offset from -1..1 to percentage for object-position
+  // At 0: 50% (centered)
+  // At -1: 0% (show left/top edge)
+  // At +1: 100% (show right/bottom edge)
+  const posX = 50 + cropConfig.offsetX * 50;
+  const posY = 50 + cropConfig.offsetY * 50;
+
+  return {
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${posX}% ${posY}%`,
+    width: "100%",
+  };
+}
+
+/**
+ * Get crop config for a specific slot, with fallback to defaults
+ */
+export function getSlotCropConfig(
+  slotCrops: SlotCropConfig[] | undefined,
+  slotIndex: number
+): SlotCropConfig {
+  return slotCrops?.[slotIndex] ?? DEFAULT_SLOT_CROP;
 }

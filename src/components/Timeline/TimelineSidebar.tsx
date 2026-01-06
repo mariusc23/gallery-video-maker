@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { useGalleryStore } from "@/store/useGalleryStore";
-import { cn } from "@/lib/utils";
-import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import { GripVertical } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { COLLAGE_LAYOUTS } from "@/data/layouts";
+import { cn } from "@/lib/utils";
+import { useGalleryStore } from "@/store/useGalleryStore";
 
 interface TimelineSidebarProps {
   onOpenMediaLibraryWithPhotos?: (photoIds: string[]) => void;
@@ -25,8 +26,8 @@ export function TimelineSidebar({
   const clearSelection = useGalleryStore((state) => state.clearSelection);
   const addPhotos = useGalleryStore((state) => state.addPhotos);
 
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<null | number>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<null | number>(null);
   const [isFileDragOver, setIsFileDragOver] = useState(false);
 
   // Keyboard shortcut for Cmd+A to select all slides
@@ -167,8 +168,8 @@ export function TimelineSidebar({
         "flex h-full flex-col p-4 transition-colors",
         isFileDragOver && "bg-primary/10"
       )}
-      onDragOver={handleFileDragOver}
       onDragLeave={handleFileDragLeave}
+      onDragOver={handleFileDragOver}
       onDrop={handleFileDrop}
     >
       <div className="mb-4">
@@ -203,14 +204,6 @@ export function TimelineSidebar({
 
               return (
                 <div
-                  key={slide.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, index)}
-                  onDragEnd={handleDragEnd}
-                  onClick={(e) => handleSlideClick(slide.id, e)}
                   className={cn(
                     "bg-background flex cursor-pointer items-center gap-2 rounded border p-2 text-xs transition-colors select-none",
                     isCurrent &&
@@ -224,6 +217,14 @@ export function TimelineSidebar({
                       draggedIndex !== index &&
                       "border-primary border-2 border-dashed"
                   )}
+                  draggable
+                  key={slide.id}
+                  onClick={(e) => handleSlideClick(slide.id, e)}
+                  onDragEnd={handleDragEnd}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
                 >
                   <GripVertical className="text-muted-foreground h-4 w-4 flex-shrink-0 cursor-grab active:cursor-grabbing" />
                   <div className="min-w-0 flex-1">

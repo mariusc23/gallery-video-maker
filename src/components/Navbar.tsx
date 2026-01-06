@@ -1,12 +1,13 @@
+import { Download, Images } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Images, Download } from "lucide-react";
 
 interface NavbarProps {
-  onOpenMediaLibrary: () => void;
   onExport: () => void;
+  onOpenMediaLibrary: () => void;
 }
 
-export function Navbar({ onOpenMediaLibrary, onExport }: NavbarProps) {
+export function Navbar({ onExport, onOpenMediaLibrary }: NavbarProps) {
   return (
     <nav className="bg-background border-b">
       <div className="flex h-14 items-center gap-4 px-4">

@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,9 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MediaUploadZone } from "./MediaUploadZone";
-import { MediaGrid } from "./MediaGrid";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,25 +15,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGalleryStore } from "@/store/useGalleryStore";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
+import { useGalleryStore } from "@/store/useGalleryStore";
+
+import { MediaGrid } from "./MediaGrid";
+import { MediaUploadZone } from "./MediaUploadZone";
 
 interface MediaLibraryDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   initialSelectedPhotoIds?: string[];
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
 export function MediaLibraryDialog({
-  open,
-  onOpenChange,
   initialSelectedPhotoIds,
+  onOpenChange,
+  open,
 }: MediaLibraryDialogProps) {
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(
     new Set()
   );
   const [selectedLayoutId, setSelectedLayoutId] = useState<string>("auto");
-  const [lastClickedPhotoId, setLastClickedPhotoId] = useState<string | null>(
+  const [lastClickedPhotoId, setLastClickedPhotoId] = useState<null | string>(
     null
   );
 
@@ -161,7 +163,7 @@ export function MediaLibraryDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
@@ -174,8 +176,8 @@ export function MediaLibraryDialog({
           <MediaUploadZone onPhotosUploaded={handlePhotosUploaded} />
 
           <MediaGrid
-            selectedPhotoIds={selectedPhotoIds}
             onTogglePhoto={handleTogglePhoto}
+            selectedPhotoIds={selectedPhotoIds}
           />
 
           {selectedPhotoIds.size > 0 && (
@@ -186,9 +188,9 @@ export function MediaLibraryDialog({
                   {selectedPhotoIds.size === 1 ? "" : "s"} selected
                 </div>
                 <Button
-                  variant="outline"
-                  size="sm"
                   onClick={handleClearSelection}
+                  size="sm"
+                  variant="outline"
                 >
                   Clear Selection
                 </Button>
@@ -198,8 +200,8 @@ export function MediaLibraryDialog({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Layout</label>
                   <Select
-                    value={selectedLayoutId}
                     onValueChange={setSelectedLayoutId}
+                    value={selectedLayoutId}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a layout" />
@@ -224,15 +226,15 @@ export function MediaLibraryDialog({
               )}
 
               <div className="flex gap-2">
-                <Button onClick={handleCreateSlides} className="flex-1">
+                <Button className="flex-1" onClick={handleCreateSlides}>
                   Create Slides
                 </Button>
                 {selectedSlideIds.size > 0 && (
                   <Button
-                    onClick={handleAddToSlides}
-                    variant="secondary"
                     className="flex-1"
                     disabled={!hasEmptySlots}
+                    onClick={handleAddToSlides}
+                    variant="secondary"
                   >
                     Add to Selected Slides
                   </Button>

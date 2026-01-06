@@ -1,4 +1,7 @@
+import { AlertCircle, Video } from "lucide-react";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -15,31 +17,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ExportProgress } from "./ExportProgress";
-import { useExport } from "@/export/useExport";
 import {
-  RESOLUTION_CONFIGS,
-  FPS_OPTIONS,
-  type ExportResolution,
   type ExportFps,
+  type ExportResolution,
+  FPS_OPTIONS,
+  RESOLUTION_CONFIGS,
 } from "@/export/types";
-import { AlertCircle, Video } from "lucide-react";
+import { useExport } from "@/export/useExport";
+
+import { ExportProgress } from "./ExportProgress";
 
 interface ExportDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
-export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
+export function ExportDialog({ onOpenChange, open }: ExportDialogProps) {
   const [resolution, setResolution] = useState<ExportResolution>("1080p");
   const [fps, setFps] = useState<ExportFps>(30);
   const {
+    cancelExport,
+    canExport,
     isExporting,
     progress,
-    startExport,
-    cancelExport,
     resetProgress,
-    canExport,
+    startExport,
   } = useExport();
 
   const handleExport = () => {
@@ -60,7 +62,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   const showResults = isComplete || isError || isCancelled;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -78,8 +80,8 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Resolution</label>
                 <Select
-                  value={resolution}
                   onValueChange={(v) => setResolution(v as ExportResolution)}
+                  value={resolution}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -97,8 +99,8 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Frame Rate</label>
                 <Select
-                  value={String(fps)}
                   onValueChange={(v) => setFps(Number(v) as ExportFps)}
+                  value={String(fps)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -125,17 +127,17 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>
+              <Button onClick={handleClose} variant="outline">
                 Cancel
               </Button>
-              <Button onClick={handleExport} disabled={!canExport}>
+              <Button disabled={!canExport} onClick={handleExport}>
                 Start Export
               </Button>
             </DialogFooter>
           </>
         ) : (
           <>
-            <ExportProgress progress={progress} onCancel={cancelExport} />
+            <ExportProgress onCancel={cancelExport} progress={progress} />
             {showResults && (
               <DialogFooter>
                 <Button onClick={handleClose}>Close</Button>

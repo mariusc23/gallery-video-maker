@@ -1,4 +1,5 @@
 import type { Slide } from "@/types";
+
 import { CollageSlide } from "./slides/CollageSlide";
 
 interface SlideRendererProps {

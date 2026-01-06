@@ -1,16 +1,17 @@
-import type { Photo, Slide, CollageLayout, SlotCropConfig } from "@/types";
+import type { CollageLayout, Photo, Slide, SlotCropConfig } from "@/types";
+
 import { DEFAULT_SLOT_CROP } from "@/types";
 import {
-  calculateCropSourceRect,
   calculateContainDestRect,
+  calculateCropSourceRect,
 } from "@/utils/cropUtils";
 
 export class CanvasRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  private height: number;
   private imageCache: Map<string, HTMLImageElement> = new Map();
   private width: number;
-  private height: number;
 
   constructor(width: number, height: number) {
     this.canvas = document.createElement("canvas");
@@ -19,6 +20,27 @@ export class CanvasRenderer {
     this.ctx = this.canvas.getContext("2d")!;
     this.width = width;
     this.height = height;
+  }
+
+  clear(): void {
+    this.ctx.fillStyle = "#000000";
+    this.ctx.fillRect(0, 0, this.width, this.height);
+  }
+
+  getCanvas(): HTMLCanvasElement {
+    return this.canvas;
+  }
+
+  getContext(): CanvasRenderingContext2D {
+    return this.ctx;
+  }
+
+  getHeight(): number {
+    return this.height;
+  }
+
+  getWidth(): number {
+    return this.width;
   }
 
   async preloadImages(photos: Record<string, Photo>): Promise<void> {
@@ -77,86 +99,6 @@ export class CanvasRenderer {
     });
   }
 
-  private drawImageWithCrop(
-    img: HTMLImageElement,
-    x: number,
-    y: number,
-    targetWidth: number,
-    targetHeight: number,
-    cropConfig: SlotCropConfig
-  ): void {
-    if (cropConfig.objectFit === "contain") {
-      // Contain mode - show full image with letterboxing
-      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
-        cropConfig,
-        img.width,
-        img.height,
-        targetWidth,
-        targetHeight
-      );
-      const { destX, destY, destW, destH } = calculateContainDestRect(
-        img.width,
-        img.height,
-        targetWidth,
-        targetHeight
-      );
-
-      this.ctx.drawImage(
-        img,
-        sourceX,
-        sourceY,
-        sourceW,
-        sourceH,
-        x + destX,
-        y + destY,
-        destW,
-        destH
-      );
-    } else {
-      // Cover mode with offset
-      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
-        cropConfig,
-        img.width,
-        img.height,
-        targetWidth,
-        targetHeight
-      );
-
-      this.ctx.drawImage(
-        img,
-        sourceX,
-        sourceY,
-        sourceW,
-        sourceH,
-        x,
-        y,
-        targetWidth,
-        targetHeight
-      );
-    }
-  }
-
-  getCanvas(): HTMLCanvasElement {
-    return this.canvas;
-  }
-
-  getContext(): CanvasRenderingContext2D {
-    return this.ctx;
-  }
-
-  getWidth(): number {
-    return this.width;
-  }
-
-  getHeight(): number {
-    return this.height;
-  }
-
-  clear(): void {
-    this.ctx.fillStyle = "#000000";
-    this.ctx.fillRect(0, 0, this.width, this.height);
-  }
-
   // Render a slide to a new temporary canvas (for transitions)
   renderSlideToCanvas(
     slide: Slide,
@@ -210,6 +152,65 @@ export class CanvasRenderer {
     return tempCanvas;
   }
 
+  private drawImageWithCrop(
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    targetWidth: number,
+    targetHeight: number,
+    cropConfig: SlotCropConfig
+  ): void {
+    if (cropConfig.objectFit === "contain") {
+      // Contain mode - show full image with letterboxing
+      const { sourceH, sourceW, sourceX, sourceY } = calculateCropSourceRect(
+        cropConfig,
+        img.width,
+        img.height,
+        targetWidth,
+        targetHeight
+      );
+      const { destH, destW, destX, destY } = calculateContainDestRect(
+        img.width,
+        img.height,
+        targetWidth,
+        targetHeight
+      );
+
+      this.ctx.drawImage(
+        img,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        x + destX,
+        y + destY,
+        destW,
+        destH
+      );
+    } else {
+      // Cover mode with offset
+      const { sourceH, sourceW, sourceX, sourceY } = calculateCropSourceRect(
+        cropConfig,
+        img.width,
+        img.height,
+        targetWidth,
+        targetHeight
+      );
+
+      this.ctx.drawImage(
+        img,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        x,
+        y,
+        targetWidth,
+        targetHeight
+      );
+    }
+  }
+
   private drawImageWithCropToContext(
     ctx: CanvasRenderingContext2D,
     img: HTMLImageElement,
@@ -221,14 +222,14 @@ export class CanvasRenderer {
   ): void {
     if (cropConfig.objectFit === "contain") {
       // Contain mode - show full image with letterboxing
-      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
+      const { sourceH, sourceW, sourceX, sourceY } = calculateCropSourceRect(
         cropConfig,
         img.width,
         img.height,
         targetWidth,
         targetHeight
       );
-      const { destX, destY, destW, destH } = calculateContainDestRect(
+      const { destH, destW, destX, destY } = calculateContainDestRect(
         img.width,
         img.height,
         targetWidth,
@@ -248,7 +249,7 @@ export class CanvasRenderer {
       );
     } else {
       // Cover mode with offset
-      const { sourceX, sourceY, sourceW, sourceH } = calculateCropSourceRect(
+      const { sourceH, sourceW, sourceX, sourceY } = calculateCropSourceRect(
         cropConfig,
         img.width,
         img.height,

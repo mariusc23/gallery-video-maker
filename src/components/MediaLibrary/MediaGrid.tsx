@@ -1,12 +1,13 @@
 import { useGalleryStore } from "@/store/useGalleryStore";
+
 import { MediaItem } from "./MediaItem";
 
 interface MediaGridProps {
-  selectedPhotoIds: Set<string>;
   onTogglePhoto: (photoId: string, event?: React.MouseEvent) => void;
+  selectedPhotoIds: Set<string>;
 }
 
-export function MediaGrid({ selectedPhotoIds, onTogglePhoto }: MediaGridProps) {
+export function MediaGrid({ onTogglePhoto, selectedPhotoIds }: MediaGridProps) {
   const photos = useGalleryStore((state) => state.photos);
   const photoList = Object.values(photos);
 
@@ -24,12 +25,12 @@ export function MediaGrid({ selectedPhotoIds, onTogglePhoto }: MediaGridProps) {
       <div className="grid grid-cols-4 gap-4">
         {photoList.map((photo) => (
           <MediaItem
-            key={photo.id}
-            photo={photo}
             isSelected={selectedPhotoIds.has(photo.id)}
+            key={photo.id}
             onToggle={(event: React.MouseEvent) =>
               onTogglePhoto(photo.id, event)
             }
+            photo={photo}
           />
         ))}
       </div>

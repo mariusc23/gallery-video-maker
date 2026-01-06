@@ -1,15 +1,8 @@
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useGalleryStore } from "@/store/useGalleryStore";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+import type { TransitionConfig, TransitionType } from "@/types";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,23 +14,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
-import type { TransitionType, TransitionConfig } from "@/types";
-import { Trash2 } from "lucide-react";
+import { useGalleryStore } from "@/store/useGalleryStore";
 
 interface BatchUpdates {
   duration?: number;
   transition?: TransitionConfig;
 }
 
-const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
-  { value: "none", label: "None (Cut)" },
-  { value: "fade", label: "Fade" },
-  { value: "slide", label: "Slide" },
-  { value: "zoom", label: "Zoom" },
-  { value: "rotate", label: "Rotate" },
-  { value: "blur", label: "Blur" },
-  { value: "kenBurns", label: "Ken Burns" },
+const TRANSITION_TYPES: { label: string; value: TransitionType; }[] = [
+  { label: "None (Cut)", value: "none" },
+  { label: "Fade", value: "fade" },
+  { label: "Slide", value: "slide" },
+  { label: "Zoom", value: "zoom" },
+  { label: "Rotate", value: "rotate" },
+  { label: "Blur", value: "blur" },
+  { label: "Ken Burns", value: "kenBurns" },
 ];
 
 export function BatchEditPanel() {
@@ -47,9 +49,9 @@ export function BatchEditPanel() {
   const deleteSlides = useGalleryStore((state) => state.deleteSlides);
   const clearSelection = useGalleryStore((state) => state.clearSelection);
 
-  const [duration, setDuration] = useState<number | null>(null);
-  const [transition, setTransition] = useState<TransitionType | null>(null);
-  const [layoutId, setLayoutId] = useState<string | null>(null);
+  const [duration, setDuration] = useState<null | number>(null);
+  const [transition, setTransition] = useState<null | TransitionType>(null);
+  const [layoutId, setLayoutId] = useState<null | string>(null);
 
   const handleApplyChanges = () => {
     const updates: BatchUpdates = {};
@@ -61,7 +63,7 @@ export function BatchEditPanel() {
 
     // Apply transition change
     if (transition !== null) {
-      updates.transition = { type: transition, duration: 15 };
+      updates.transition = { duration: 15, type: transition };
     }
 
     // Apply layout change with photo redistribution
@@ -109,7 +111,7 @@ export function BatchEditPanel() {
       {/* Layout Control */}
       <div className="space-y-2">
         <Label>Layout</Label>
-        <Select value={layoutId ?? ""} onValueChange={setLayoutId}>
+        <Select onValueChange={setLayoutId} value={layoutId ?? ""}>
           <SelectTrigger>
             <SelectValue placeholder="Leave unchanged" />
           </SelectTrigger>
@@ -138,11 +140,11 @@ export function BatchEditPanel() {
           )}
         </div>
         <Slider
-          value={[duration ?? 3]}
-          onValueChange={(value) => setDuration(value[0])}
-          min={1}
           max={10}
+          min={1}
+          onValueChange={(value) => setDuration(value[0])}
           step={0.5}
+          value={[duration ?? 3]}
         />
         <p className="text-muted-foreground text-xs">
           {duration === null
@@ -155,8 +157,8 @@ export function BatchEditPanel() {
       <div className="space-y-2">
         <Label>Transition</Label>
         <Select
-          value={transition ?? ""}
           onValueChange={(value) => setTransition(value as TransitionType)}
+          value={transition ?? ""}
         >
           <SelectTrigger>
             <SelectValue placeholder="Leave unchanged" />
@@ -173,10 +175,10 @@ export function BatchEditPanel() {
 
       {/* Action Buttons */}
       <div className="flex gap-2">
-        <Button onClick={handleApplyChanges} className="flex-1">
+        <Button className="flex-1" onClick={handleApplyChanges}>
           Apply Changes
         </Button>
-        <Button onClick={handleCancel} variant="outline" className="flex-1">
+        <Button className="flex-1" onClick={handleCancel} variant="outline">
           Cancel
         </Button>
       </div>
@@ -185,7 +187,7 @@ export function BatchEditPanel() {
       <div className="border-t pt-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full">
+            <Button className="w-full" variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />
               Delete {selectedSlideIds.size} Slide
               {selectedSlideIds.size === 1 ? "" : "s"}
@@ -203,8 +205,8 @@ export function BatchEditPanel() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDeleteSlides}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={handleDeleteSlides}
               >
                 Delete
               </AlertDialogAction>

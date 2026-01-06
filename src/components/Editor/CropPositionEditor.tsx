@@ -1,30 +1,32 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type { Photo, SlotCropConfig } from "@/types";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import type { Photo, SlotCropConfig } from "@/types";
 import { clampOffset } from "@/utils/cropUtils";
 
 interface CropPositionEditorProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  photo: Photo;
   cropConfig: SlotCropConfig;
-  slotAspect: number;
+  onOpenChange: (open: boolean) => void;
   onUpdate: (updates: Partial<SlotCropConfig>) => void;
+  open: boolean;
+  photo: Photo;
+  slotAspect: number;
 }
 
 export function CropPositionEditor({
-  open,
-  onOpenChange,
-  photo,
   cropConfig,
-  slotAspect,
+  onOpenChange,
   onUpdate,
+  open,
+  photo,
+  slotAspect,
 }: CropPositionEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -103,9 +105,9 @@ export function CropPositionEditor({
   const getPreviewStyles = (): React.CSSProperties => {
     if (cropConfig.objectFit === "contain") {
       return {
-        width: "100%",
         height: "100%",
         objectFit: "contain",
+        width: "100%",
       };
     }
 
@@ -113,17 +115,17 @@ export function CropPositionEditor({
     const posY = 50 + localOffset.y * 50;
 
     return {
-      width: "100%",
       height: "100%",
       objectFit: "cover",
       objectPosition: `${posX}% ${posY}%`,
+      width: "100%",
     };
   };
 
   const canDrag = cropConfig.objectFit === "cover" && (canPanX || canPanY);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Adjust Crop Position</DialogTitle>
@@ -132,17 +134,17 @@ export function CropPositionEditor({
         <div className="space-y-4">
           {/* Preview */}
           <div
-            ref={containerRef}
             className="relative w-full overflow-hidden rounded-lg bg-black"
-            style={{ aspectRatio: slotAspect }}
             onMouseDown={handleMouseDown}
+            ref={containerRef}
+            style={{ aspectRatio: slotAspect }}
           >
             <img
-              src={photo.url}
               alt=""
-              draggable={false}
-              style={getPreviewStyles()}
               className={canDrag ? "cursor-move" : ""}
+              draggable={false}
+              src={photo.url}
+              style={getPreviewStyles()}
             />
 
             {/* Drag hint overlay */}
@@ -176,12 +178,12 @@ export function CropPositionEditor({
           {/* Actions */}
           <div className="flex justify-between">
             <Button
-              variant="outline"
-              onClick={handleReset}
               disabled={
                 cropConfig.objectFit === "contain" ||
                 (localOffset.x === 0 && localOffset.y === 0)
               }
+              onClick={handleReset}
+              variant="outline"
             >
               Reset to Center
             </Button>

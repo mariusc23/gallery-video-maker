@@ -1,5 +1,7 @@
 import type { Slide } from "@/types";
+
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
+
 import { generateId } from "./photoUtils";
 
 /**

@@ -1,22 +1,15 @@
+import {
+  Crop,
+  GripVertical,
+  ImagePlus,
+  Maximize,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
-import { useGalleryStore } from "@/store/useGalleryStore";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
+import type { SlotCropConfig, TransitionType } from "@/types";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,30 +21,40 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { COLLAGE_LAYOUTS } from "@/data/layouts";
-import { BatchEditPanel } from "./BatchEditPanel";
-import { CropPositionEditor } from "./CropPositionEditor";
+import { Button } from "@/components/ui/button";
 import {
-  X,
-  ImagePlus,
-  GripVertical,
-  Maximize,
-  Crop,
-  Trash2,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { COLLAGE_LAYOUTS } from "@/data/layouts";
 import { cn } from "@/lib/utils";
-import type { TransitionType, SlotCropConfig } from "@/types";
+import { useGalleryStore } from "@/store/useGalleryStore";
 import { DEFAULT_SLOT_CROP } from "@/types";
 import { getSlotCropConfig } from "@/utils/cropUtils";
 
-const TRANSITION_TYPES: { value: TransitionType; label: string }[] = [
-  { value: "none", label: "None (Cut)" },
-  { value: "fade", label: "Fade" },
-  { value: "slide", label: "Slide" },
-  { value: "zoom", label: "Zoom" },
-  { value: "rotate", label: "Rotate" },
-  { value: "blur", label: "Blur" },
-  { value: "kenBurns", label: "Ken Burns" },
+import { BatchEditPanel } from "./BatchEditPanel";
+import { CropPositionEditor } from "./CropPositionEditor";
+
+const TRANSITION_TYPES: { label: string; value: TransitionType; }[] = [
+  { label: "None (Cut)", value: "none" },
+  { label: "Fade", value: "fade" },
+  { label: "Slide", value: "slide" },
+  { label: "Zoom", value: "zoom" },
+  { label: "Rotate", value: "rotate" },
+  { label: "Blur", value: "blur" },
+  { label: "Ken Burns", value: "kenBurns" },
 ];
 
 export function SlideEditor() {
@@ -66,16 +69,16 @@ export function SlideEditor() {
 
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false);
   const [photoPickerSlotIndex, setPhotoPickerSlotIndex] = useState<
-    number | null
+    null | number
   >(null);
-  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<null | number>(
     null
   );
   const [dropTargetPhotoIndex, setDropTargetPhotoIndex] = useState<
-    number | null
+    null | number
   >(null);
   const [cropEditorOpen, setCropEditorOpen] = useState(false);
-  const [cropEditorSlotIndex, setCropEditorSlotIndex] = useState<number | null>(
+  const [cropEditorSlotIndex, setCropEditorSlotIndex] = useState<null | number>(
     null
   );
 
@@ -257,8 +260,8 @@ export function SlideEditor() {
       <div className="space-y-2">
         <Label>Layout</Label>
         <Select
-          value={currentSlide.layoutId}
           onValueChange={handleLayoutChange}
+          value={currentSlide.layoutId}
         >
           <SelectTrigger>
             <SelectValue />
@@ -294,16 +297,8 @@ export function SlideEditor() {
             const photo = photoId ? photos[photoId] : null;
 
             return (
-              <div key={index} className="space-y-1">
+              <div className="space-y-1" key={index}>
                 <div
-                  draggable={!!canDrag}
-                  onDragStart={
-                    canDrag ? (e) => handlePhotoDragStart(e, index) : undefined
-                  }
-                  onDragOver={(e) => handlePhotoDragOver(e, index)}
-                  onDragLeave={handlePhotoDragLeave}
-                  onDrop={(e) => handlePhotoDrop(e, index)}
-                  onDragEnd={handlePhotoDragEnd}
                   className={cn(
                     `relative ${currentSlide.photoIds.length === 1 ? "aspect-video" : "aspect-square"} group overflow-hidden rounded-lg border-2 transition-colors`,
                     isDropTarget && draggedPhotoIndex !== index
@@ -312,23 +307,31 @@ export function SlideEditor() {
                     !isDragging && "hover:border-primary",
                     isDragging && "opacity-50"
                   )}
+                  draggable={!!canDrag}
+                  onDragEnd={handlePhotoDragEnd}
+                  onDragLeave={handlePhotoDragLeave}
+                  onDragOver={(e) => handlePhotoDragOver(e, index)}
+                  onDragStart={
+                    canDrag ? (e) => handlePhotoDragStart(e, index) : undefined
+                  }
+                  onDrop={(e) => handlePhotoDrop(e, index)}
                 >
                   {photo ? (
                     <>
                       <img
-                        src={photo.thumbnail}
                         alt=""
                         className="h-full w-full cursor-pointer object-cover"
                         onClick={() => handleOpenPhotoPicker(index)}
+                        src={photo.thumbnail}
                       />
                       {currentSlide.photoIds.length > 1 && (
                         <>
                           <button
+                            className="bg-destructive text-destructive-foreground absolute top-1 right-1 z-10 rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemovePhoto(index);
                             }}
-                            className="bg-destructive text-destructive-foreground absolute top-1 right-1 z-10 rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100"
                           >
                             <X className="h-3 w-3 text-white" />
                           </button>
@@ -338,8 +341,8 @@ export function SlideEditor() {
                         </>
                       )}
                       <div
-                        onClick={() => handleOpenPhotoPicker(index)}
                         className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+                        onClick={() => handleOpenPhotoPicker(index)}
                       >
                         <ImagePlus
                           className={`${currentSlide.photoIds.length === 1 ? "h-8 w-8" : "h-6 w-6"} text-white`}
@@ -348,8 +351,8 @@ export function SlideEditor() {
                     </>
                   ) : (
                     <div
-                      onClick={() => handleOpenPhotoPicker(index)}
                       className="text-muted-foreground flex h-full w-full cursor-pointer items-center justify-center"
+                      onClick={() => handleOpenPhotoPicker(index)}
                     >
                       <ImagePlus
                         className={
@@ -365,15 +368,15 @@ export function SlideEditor() {
                 {photo && (
                   <div className="flex gap-1">
                     <Button
-                      variant="outline"
-                      size="sm"
                       className="h-7 flex-1 text-xs"
                       onClick={() => handleToggleObjectFit(index)}
+                      size="sm"
                       title={
                         cropConfig.objectFit === "cover"
                           ? "Switch to Contain (show full image)"
                           : "Switch to Cover (fill slot)"
                       }
+                      variant="outline"
                     >
                       {cropConfig.objectFit === "cover" ? (
                         <>
@@ -389,11 +392,11 @@ export function SlideEditor() {
                     </Button>
                     {cropConfig.objectFit === "cover" && (
                       <Button
-                        variant="outline"
-                        size="sm"
                         className="h-7 px-2 text-xs"
                         onClick={() => handleOpenCropEditor(index)}
+                        size="sm"
                         title="Adjust crop position"
+                        variant="outline"
                       >
                         Adjust
                       </Button>
@@ -418,11 +421,11 @@ export function SlideEditor() {
           </span>
         </div>
         <Slider
-          value={[durationInSeconds]}
-          onValueChange={handleDurationChange}
-          min={1}
           max={10}
+          min={1}
+          onValueChange={handleDurationChange}
           step={0.5}
+          value={[durationInSeconds]}
         />
         <p className="text-muted-foreground text-xs">
           1 to 10 seconds per slide
@@ -433,8 +436,8 @@ export function SlideEditor() {
       <div className="space-y-2">
         <Label>Transition</Label>
         <Select
-          value={currentSlide.transition.type}
           onValueChange={handleTransitionChange}
+          value={currentSlide.transition.type}
         >
           <SelectTrigger>
             <SelectValue />
@@ -453,7 +456,7 @@ export function SlideEditor() {
       <div className="border-t pt-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full">
+            <Button className="w-full" variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />
               Delete Slide
             </Button>
@@ -469,8 +472,8 @@ export function SlideEditor() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDeleteSlide}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={handleDeleteSlide}
               >
                 Delete
               </AlertDialogAction>
@@ -480,7 +483,7 @@ export function SlideEditor() {
       </div>
 
       {/* Photo Picker Dialog */}
-      <Dialog open={photoPickerOpen} onOpenChange={setPhotoPickerOpen}>
+      <Dialog onOpenChange={setPhotoPickerOpen} open={photoPickerOpen}>
         <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Select Photo</DialogTitle>
@@ -489,17 +492,17 @@ export function SlideEditor() {
           <div className="mt-4 grid grid-cols-4 gap-4">
             {photoList.map((photo) => (
               <div
-                key={photo.id}
-                onClick={() => handleSelectPhoto(photo.id)}
                 className={cn(
                   "relative aspect-square cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
                   "hover:border-primary border-transparent"
                 )}
+                key={photo.id}
+                onClick={() => handleSelectPhoto(photo.id)}
               >
                 <img
-                  src={photo.thumbnail}
                   alt=""
                   className="h-full w-full object-cover"
+                  src={photo.thumbnail}
                 />
               </div>
             ))}
@@ -517,13 +520,14 @@ export function SlideEditor() {
         currentSlide.photoIds[cropEditorSlotIndex] &&
         photos[currentSlide.photoIds[cropEditorSlotIndex]] && (
           <CropPositionEditor
-            open={cropEditorOpen}
-            onOpenChange={setCropEditorOpen}
-            photo={photos[currentSlide.photoIds[cropEditorSlotIndex]]}
             cropConfig={getSlotCropConfig(
               currentSlide.slotCrops,
               cropEditorSlotIndex
             )}
+            onOpenChange={setCropEditorOpen}
+            onUpdate={handleCropUpdate}
+            open={cropEditorOpen}
+            photo={photos[currentSlide.photoIds[cropEditorSlotIndex]]}
             slotAspect={(() => {
               const currentLayout = COLLAGE_LAYOUTS.find(
                 (l) => l.id === currentSlide.layoutId
@@ -533,7 +537,6 @@ export function SlideEditor() {
               if (!slot) return 16 / 9;
               return (slot.width / slot.height) * (16 / 9);
             })()}
-            onUpdate={handleCropUpdate}
           />
         )}
     </div>

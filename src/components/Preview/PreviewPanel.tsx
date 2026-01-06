@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react";
-import { Player } from "@remotion/player";
 import type { PlayerRef } from "@remotion/player";
-import { useGalleryStore } from "@/store/useGalleryStore";
+
+import { Player } from "@remotion/player";
+import { useEffect, useRef } from "react";
+
 import { VideoComposition } from "@/remotion/VideoComposition";
+import { useGalleryStore } from "@/store/useGalleryStore";
 
 export function PreviewPanel() {
   const slides = useGalleryStore((state) => state.slides);
@@ -35,16 +37,16 @@ export function PreviewPanel() {
           </div>
         ) : (
           <Player
-            ref={playerRef}
             component={VideoComposition}
-            durationInFrames={totalDuration || 90}
-            compositionWidth={1920}
             compositionHeight={1080}
-            fps={30}
+            compositionWidth={1920}
             controls
+            durationInFrames={totalDuration || 90}
+            fps={30}
+            ref={playerRef}
             style={{
-              width: "100%",
               maxHeight: "100%",
+              width: "100%",
             }}
           />
         )}

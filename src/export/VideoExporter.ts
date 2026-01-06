@@ -1,19 +1,21 @@
-import type { Photo, Slide, CollageLayout } from "@/types";
+import type { CollageLayout, Photo, Slide } from "@/types";
+
+import type { ExportOptions, ExportProgress, ResolutionConfig } from "./types";
+
 import { CanvasRenderer } from "./CanvasRenderer";
 import { renderTransitionFrame } from "./transitions";
-import type { ExportOptions, ExportProgress, ResolutionConfig } from "./types";
 import { RESOLUTION_CONFIGS } from "./types";
 
 const BASE_FPS = 30; // Slide durations are stored at 30fps
 
 export class VideoExporter {
-  private canvas: HTMLCanvasElement;
-  private renderer: CanvasRenderer;
-  private mediaRecorder: MediaRecorder | null = null;
-  private chunks: Blob[] = [];
   private abortController: AbortController | null = null;
-  private options: ExportOptions;
+  private canvas: HTMLCanvasElement;
+  private chunks: Blob[] = [];
   private config: ResolutionConfig;
+  private mediaRecorder: MediaRecorder | null = null;
+  private options: ExportOptions;
+  private renderer: CanvasRenderer;
 
   constructor(options: ExportOptions) {
     this.options = options;
@@ -22,6 +24,10 @@ export class VideoExporter {
     this.canvas.width = this.config.width;
     this.canvas.height = this.config.height;
     this.renderer = new CanvasRenderer(this.config.width, this.config.height);
+  }
+
+  cancel(): void {
+    this.abortController?.abort();
   }
 
   async export(
@@ -41,11 +47,11 @@ export class VideoExporter {
 
     // Pre-load all images
     onProgress({
-      status: "preparing",
       currentFrame: 0,
-      totalFrames,
-      percentage: 0,
       estimatedTimeRemaining: null,
+      percentage: 0,
+      status: "preparing",
+      totalFrames,
     });
     await this.renderer.preloadImages(photos);
 
@@ -76,11 +82,11 @@ export class VideoExporter {
 
     // Render frame by frame
     onProgress({
-      status: "rendering",
       currentFrame: 0,
-      totalFrames,
-      percentage: 0,
       estimatedTimeRemaining: null,
+      percentage: 0,
+      status: "rendering",
+      totalFrames,
     });
 
     const startTime = Date.now();
@@ -127,13 +133,13 @@ export class VideoExporter {
           const progress = frame / transitionDuration;
           renderTransitionFrame(slide.transition.type, {
             ctx: this.renderer.getContext(),
-            width: this.config.width,
             height: this.config.height,
-            progress,
-            outgoingSlide: slide,
             incomingSlide: nextSlide,
             layouts,
+            outgoingSlide: slide,
+            progress,
             renderer: this.renderer,
+            width: this.config.width,
           });
           ctx.drawImage(this.renderer.getCanvas(), 0, 0);
           await this.waitForNextFrame(currentFrame, startTime);
@@ -145,22 +151,22 @@ export class VideoExporter {
 
     // Stop recording and wait for final data
     onProgress({
-      status: "encoding",
       currentFrame: totalFrames,
-      totalFrames,
-      percentage: 100,
       estimatedTimeRemaining: 0,
+      percentage: 100,
+      status: "encoding",
+      totalFrames,
     });
 
     return new Promise((resolve, reject) => {
       this.mediaRecorder!.onstop = () => {
         const blob = new Blob(this.chunks, { type: mimeType });
         onProgress({
-          status: "complete",
           currentFrame: totalFrames,
-          totalFrames,
-          percentage: 100,
           estimatedTimeRemaining: null,
+          percentage: 100,
+          status: "complete",
+          totalFrames,
         });
         resolve(blob);
       };
@@ -188,21 +194,6 @@ export class VideoExporter {
     return "video/webm";
   }
 
-  private async waitForNextFrame(
-    currentFrame: number,
-    startTime: number
-  ): Promise<void> {
-    // Calculate when the next frame should be displayed based on elapsed time
-    const frameDuration = 1000 / this.options.fps;
-    const targetTime = startTime + (currentFrame + 1) * frameDuration;
-    const now = Date.now();
-    const waitTime = Math.max(0, targetTime - now);
-
-    if (waitTime > 0) {
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-    }
-  }
-
   private updateProgress(
     onProgress: (p: ExportProgress) => void,
     currentFrame: number,
@@ -217,15 +208,26 @@ export class VideoExporter {
       framesPerSecond > 0 ? remainingFrames / framesPerSecond : null;
 
     onProgress({
-      status: "rendering",
       currentFrame,
-      totalFrames,
-      percentage,
       estimatedTimeRemaining,
+      percentage,
+      status: "rendering",
+      totalFrames,
     });
   }
 
-  cancel(): void {
-    this.abortController?.abort();
+  private async waitForNextFrame(
+    currentFrame: number,
+    startTime: number
+  ): Promise<void> {
+    // Calculate when the next frame should be displayed based on elapsed time
+    const frameDuration = 1000 / this.options.fps;
+    const targetTime = startTime + (currentFrame + 1) * frameDuration;
+    const now = Date.now();
+    const waitTime = Math.max(0, targetTime - now);
+
+    if (waitTime > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
   }
 }

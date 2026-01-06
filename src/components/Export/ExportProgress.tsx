@@ -1,17 +1,19 @@
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+
+import type { ExportProgress as ExportProgressType } from "@/export/types";
+
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { ExportProgress as ExportProgressType } from "@/export/types";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 interface ExportProgressProps {
-  progress: ExportProgressType | null;
   onCancel: () => void;
+  progress: ExportProgressType | null;
 }
 
-export function ExportProgress({ progress, onCancel }: ExportProgressProps) {
+export function ExportProgress({ onCancel, progress }: ExportProgressProps) {
   if (!progress) return null;
 
-  const formatTime = (seconds: number | null): string => {
+  const formatTime = (seconds: null | number): string => {
     if (seconds === null) return "--:--";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -19,13 +21,13 @@ export function ExportProgress({ progress, onCancel }: ExportProgressProps) {
   };
 
   const statusLabels: Record<string, string> = {
-    preparing: "Loading images...",
-    rendering: "Rendering frames...",
-    encoding: "Finalizing video...",
-    complete: "Export complete!",
     cancelled: "Export cancelled",
+    complete: "Export complete!",
+    encoding: "Finalizing video...",
     error: "Export failed",
     idle: "",
+    preparing: "Loading images...",
+    rendering: "Rendering frames...",
   };
 
   const isComplete = progress.status === "complete";
@@ -62,7 +64,7 @@ export function ExportProgress({ progress, onCancel }: ExportProgressProps) {
           </div>
 
           <div className="flex justify-center">
-            <Button variant="destructive" size="sm" onClick={onCancel}>
+            <Button onClick={onCancel} size="sm" variant="destructive">
               Cancel Export
             </Button>
           </div>

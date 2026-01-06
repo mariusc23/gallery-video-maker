@@ -6,40 +6,7 @@ export interface FaceCenter {
 }
 
 let faceDetector: FaceDetector | null = null;
-let initPromise: Promise<FaceDetector | null> | null = null;
-
-/**
- * Initialize the MediaPipe Face Detector (lazy, singleton)
- */
-async function getDetector(): Promise<FaceDetector | null> {
-  if (faceDetector) return faceDetector;
-
-  if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    try {
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-      );
-
-      faceDetector = await FaceDetector.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath:
-            "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
-          delegate: "GPU",
-        },
-        runningMode: "IMAGE",
-      });
-
-      return faceDetector;
-    } catch (error) {
-      console.warn("Failed to initialize face detector:", error);
-      return null;
-    }
-  })();
-
-  return initPromise;
-}
+let initPromise: null | Promise<FaceDetector | null> = null;
 
 /**
  * Detect faces in an image and return the average center position.
@@ -82,4 +49,37 @@ export async function detectFaceCenter(
     console.warn("Face detection failed:", error);
     return null;
   }
+}
+
+/**
+ * Initialize the MediaPipe Face Detector (lazy, singleton)
+ */
+async function getDetector(): Promise<FaceDetector | null> {
+  if (faceDetector) return faceDetector;
+
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    try {
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      );
+
+      faceDetector = await FaceDetector.createFromOptions(vision, {
+        baseOptions: {
+          delegate: "GPU",
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+        },
+        runningMode: "IMAGE",
+      });
+
+      return faceDetector;
+    } catch (error) {
+      console.warn("Failed to initialize face detector:", error);
+      return null;
+    }
+  })();
+
+  return initPromise;
 }

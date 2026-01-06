@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
+
 import { cn } from "@/lib/utils";
 import { useGalleryStore } from "@/store/useGalleryStore";
 
@@ -60,25 +61,25 @@ export function MediaUploadZone({ onPhotosUploaded }: MediaUploadZoneProps) {
 
   return (
     <div
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onClick={handleClick}
       className={cn(
         "cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors",
         isDragActive
           ? "border-primary bg-primary/10"
           : "border-muted-foreground/25 hover:border-muted-foreground/50"
       )}
+      onClick={handleClick}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       <input
-        ref={inputRef}
-        type="file"
         accept="image/*"
+        className="hidden"
         multiple
         onChange={handleFileInput}
-        className="hidden"
+        ref={inputRef}
+        type="file"
       />
       <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
       {isDragActive ? (

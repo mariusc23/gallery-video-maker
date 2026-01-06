@@ -1,5 +1,56 @@
 import type { Photo } from "@/types";
+
 import { detectFaceCenter } from "./faceDetection";
+
+/**
+ * Chunk an array into smaller arrays of specified size
+ * @param array - The array to chunk
+ * @param size - The size of each chunk
+ * @returns Array of chunks
+ */
+export function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
+ * Create a Photo object from a File
+ * @param file - The image file
+ * @returns Photo object with metadata
+ */
+export async function createPhotoFromFile(file: File): Promise<Photo> {
+  const id = generateId();
+  const url = URL.createObjectURL(file);
+
+  try {
+    // Load image to get dimensions
+    const img = await loadImage(url);
+
+    // Create thumbnail
+    const thumbnail = await createThumbnail(img, 200);
+
+    // Detect face center for smart cropping
+    const faceCenter = await detectFaceCenter(img);
+
+    return {
+      aspectRatio: img.width / img.height,
+      faceCenter: faceCenter ?? undefined,
+      file,
+      height: img.height,
+      id,
+      thumbnail,
+      url,
+      width: img.width,
+    };
+  } catch (error) {
+    // Clean up object URL if there's an error
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
 
 /**
  * Generate a unique ID for photos and slides
@@ -9,14 +60,12 @@ export function generateId(): string {
 }
 
 /**
- * Load an image from a URL and return the HTMLImageElement
+ * Revoke object URLs to prevent memory leaks
+ * @param photos - Array of photos whose URLs should be revoked
  */
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
+export function revokePhotoUrls(photos: Photo[]): void {
+  photos.forEach((photo) => {
+    URL.revokeObjectURL(photo.url);
   });
 }
 
@@ -46,61 +95,13 @@ async function createThumbnail(
 }
 
 /**
- * Create a Photo object from a File
- * @param file - The image file
- * @returns Photo object with metadata
+ * Load an image from a URL and return the HTMLImageElement
  */
-export async function createPhotoFromFile(file: File): Promise<Photo> {
-  const id = generateId();
-  const url = URL.createObjectURL(file);
-
-  try {
-    // Load image to get dimensions
-    const img = await loadImage(url);
-
-    // Create thumbnail
-    const thumbnail = await createThumbnail(img, 200);
-
-    // Detect face center for smart cropping
-    const faceCenter = await detectFaceCenter(img);
-
-    return {
-      id,
-      file,
-      url,
-      thumbnail,
-      width: img.width,
-      height: img.height,
-      aspectRatio: img.width / img.height,
-      faceCenter: faceCenter ?? undefined,
-    };
-  } catch (error) {
-    // Clean up object URL if there's an error
-    URL.revokeObjectURL(url);
-    throw error;
-  }
-}
-
-/**
- * Revoke object URLs to prevent memory leaks
- * @param photos - Array of photos whose URLs should be revoked
- */
-export function revokePhotoUrls(photos: Photo[]): void {
-  photos.forEach((photo) => {
-    URL.revokeObjectURL(photo.url);
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
   });
-}
-
-/**
- * Chunk an array into smaller arrays of specified size
- * @param array - The array to chunk
- * @param size - The size of each chunk
- * @returns Array of chunks
- */
-export function chunkArray<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
 }

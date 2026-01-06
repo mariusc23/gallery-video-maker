@@ -1,18 +1,21 @@
-import { useState, useCallback, useRef } from "react";
-import { VideoExporter } from "./VideoExporter";
-import { useGalleryStore } from "@/store/useGalleryStore";
+import { useCallback, useRef, useState } from "react";
+
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
+import { useGalleryStore } from "@/store/useGalleryStore";
+
 import type {
+  ExportFps,
   ExportOptions,
   ExportProgress,
   ExportResolution,
-  ExportFps,
 } from "./types";
+
+import { VideoExporter } from "./VideoExporter";
 
 export function useExport() {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState<ExportProgress | null>(null);
-  const exporterRef = useRef<VideoExporter | null>(null);
+  const exporterRef = useRef<null | VideoExporter>(null);
 
   const slides = useGalleryStore((state) => state.slides);
   const photos = useGalleryStore((state) => state.photos);
@@ -26,14 +29,14 @@ export function useExport() {
 
       setIsExporting(true);
       setProgress({
-        status: "preparing",
         currentFrame: 0,
-        totalFrames: 0,
-        percentage: 0,
         estimatedTimeRemaining: null,
+        percentage: 0,
+        status: "preparing",
+        totalFrames: 0,
       });
 
-      const options: ExportOptions = { resolution, fps };
+      const options: ExportOptions = { fps, resolution };
       const exporter = new VideoExporter(options);
       exporterRef.current = exporter;
 
@@ -60,12 +63,12 @@ export function useExport() {
       } catch (error) {
         if ((error as Error).message !== "Export cancelled") {
           setProgress({
-            status: "error",
             currentFrame: 0,
-            totalFrames: 0,
-            percentage: 0,
-            estimatedTimeRemaining: null,
             error: (error as Error).message,
+            estimatedTimeRemaining: null,
+            percentage: 0,
+            status: "error",
+            totalFrames: 0,
           });
         }
       } finally {
@@ -79,11 +82,11 @@ export function useExport() {
   const cancelExport = useCallback(() => {
     exporterRef.current?.cancel();
     setProgress({
-      status: "cancelled",
       currentFrame: 0,
-      totalFrames: 0,
-      percentage: 0,
       estimatedTimeRemaining: null,
+      percentage: 0,
+      status: "cancelled",
+      totalFrames: 0,
     });
     setIsExporting(false);
   }, []);
@@ -93,11 +96,11 @@ export function useExport() {
   }, []);
 
   return {
+    cancelExport,
+    canExport: slides.length > 0,
     isExporting,
     progress,
-    startExport,
-    cancelExport,
     resetProgress,
-    canExport: slides.length > 0,
+    startExport,
   };
 }

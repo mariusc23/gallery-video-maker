@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 
 interface MainLayoutProps {
-  timeline: ReactNode;
   editor: ReactNode;
   preview: ReactNode;
+  timeline: ReactNode;
 }
 
-export function MainLayout({ timeline, editor, preview }: MainLayoutProps) {
+export function MainLayout({ editor, preview, timeline }: MainLayoutProps) {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* Timeline Sidebar - Left */}

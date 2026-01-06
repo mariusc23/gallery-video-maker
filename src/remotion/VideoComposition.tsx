@@ -1,5 +1,7 @@
 import { Series } from "remotion";
+
 import { useGalleryStore } from "@/store/useGalleryStore";
+
 import { SlideRenderer } from "./SlideRenderer";
 
 export const VideoComposition: React.FC = () => {
@@ -9,15 +11,15 @@ export const VideoComposition: React.FC = () => {
     return (
       <div
         style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
           alignItems: "center",
-          justifyContent: "center",
           backgroundColor: "#000",
           color: "#fff",
-          fontSize: 48,
+          display: "flex",
           fontFamily: "sans-serif",
+          fontSize: 48,
+          height: "100%",
+          justifyContent: "center",
+          width: "100%",
         }}
       >
         No slides to preview
@@ -28,7 +30,7 @@ export const VideoComposition: React.FC = () => {
   return (
     <Series>
       {slides.map((slide) => (
-        <Series.Sequence key={slide.id} durationInFrames={slide.duration}>
+        <Series.Sequence durationInFrames={slide.duration} key={slide.id}>
           <SlideRenderer slide={slide} />
         </Series.Sequence>
       ))}

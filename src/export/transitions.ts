@@ -1,154 +1,30 @@
-import type { Slide, CollageLayout, TransitionType } from "@/types";
+import type { CollageLayout, Slide, TransitionType } from "@/types";
+
 import type { CanvasRenderer } from "./CanvasRenderer";
 
 export interface TransitionContext {
   ctx: CanvasRenderingContext2D;
-  width: number;
   height: number;
-  progress: number; // 0 to 1
-  outgoingSlide: Slide;
   incomingSlide: Slide;
   layouts: CollageLayout[];
+  outgoingSlide: Slide;
+  progress: number; // 0 to 1
   renderer: CanvasRenderer;
+  width: number;
 }
 
 type TransitionFunction = (context: TransitionContext) => void;
 
 const transitions: Record<TransitionType, TransitionFunction> = {
-  none: ({ renderer, incomingSlide, layouts }) => {
-    const canvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
-    renderer.getContext().drawImage(canvas, 0, 0);
-  },
-
-  fade: ({
-    ctx,
-    renderer,
-    outgoingSlide,
-    incomingSlide,
-    layouts,
-    progress,
-  }) => {
-    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
-    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
-
-    // Draw outgoing slide
-    ctx.drawImage(outgoingCanvas, 0, 0);
-
-    // Blend incoming on top with increasing alpha
-    ctx.globalAlpha = progress;
-    ctx.drawImage(incomingCanvas, 0, 0);
-    ctx.globalAlpha = 1;
-  },
-
-  slide: ({
-    ctx,
-    renderer,
-    outgoingSlide,
-    incomingSlide,
-    layouts,
-    progress,
-    width,
-    height,
-  }) => {
-    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
-    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
-
-    // Clear
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, width, height);
-
-    // Outgoing slides left
-    ctx.drawImage(outgoingCanvas, -width * progress, 0);
-
-    // Incoming slides in from right
-    ctx.drawImage(incomingCanvas, width * (1 - progress), 0);
-  },
-
-  zoom: ({
-    ctx,
-    renderer,
-    outgoingSlide,
-    incomingSlide,
-    layouts,
-    progress,
-    width,
-    height,
-  }) => {
-    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
-    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
-
-    // Clear
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, width, height);
-
-    // Outgoing zooms out and fades
-    const outScale = 1 + progress * 0.2;
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.scale(outScale, outScale);
-    ctx.globalAlpha = 1 - progress;
-    ctx.translate(-width / 2, -height / 2);
-    ctx.drawImage(outgoingCanvas, 0, 0);
-    ctx.restore();
-
-    // Incoming zooms in and fades in
-    const inScale = 0.8 + progress * 0.2;
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.scale(inScale, inScale);
-    ctx.globalAlpha = progress;
-    ctx.translate(-width / 2, -height / 2);
-    ctx.drawImage(incomingCanvas, 0, 0);
-    ctx.restore();
-    ctx.globalAlpha = 1;
-  },
-
-  rotate: ({
-    ctx,
-    renderer,
-    outgoingSlide,
-    incomingSlide,
-    layouts,
-    progress,
-    width,
-    height,
-  }) => {
-    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
-    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
-
-    // Clear
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, width, height);
-
-    // Outgoing rotates out
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate((-progress * Math.PI) / 4);
-    ctx.globalAlpha = 1 - progress;
-    ctx.translate(-width / 2, -height / 2);
-    ctx.drawImage(outgoingCanvas, 0, 0);
-    ctx.restore();
-
-    // Incoming rotates in
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate(((1 - progress) * Math.PI) / 4);
-    ctx.globalAlpha = progress;
-    ctx.translate(-width / 2, -height / 2);
-    ctx.drawImage(incomingCanvas, 0, 0);
-    ctx.restore();
-    ctx.globalAlpha = 1;
-  },
-
   blur: ({
     ctx,
-    renderer,
-    outgoingSlide,
+    height,
     incomingSlide,
     layouts,
+    outgoingSlide,
     progress,
+    renderer,
     width,
-    height,
   }) => {
     // Note: Canvas blur filter has limited browser support
     const supportsFilter = typeof ctx.filter !== "undefined";
@@ -186,15 +62,35 @@ const transitions: Record<TransitionType, TransitionFunction> = {
     ctx.filter = "none";
   },
 
-  kenBurns: ({
+  fade: ({
     ctx,
-    renderer,
-    outgoingSlide,
     incomingSlide,
     layouts,
+    outgoingSlide,
     progress,
-    width,
+    renderer,
+  }) => {
+    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
+    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
+
+    // Draw outgoing slide
+    ctx.drawImage(outgoingCanvas, 0, 0);
+
+    // Blend incoming on top with increasing alpha
+    ctx.globalAlpha = progress;
+    ctx.drawImage(incomingCanvas, 0, 0);
+    ctx.globalAlpha = 1;
+  },
+
+  kenBurns: ({
+    ctx,
     height,
+    incomingSlide,
+    layouts,
+    outgoingSlide,
+    progress,
+    renderer,
+    width,
   }) => {
     // Ken Burns: slow zoom crossfade
     const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
@@ -216,6 +112,111 @@ const transitions: Record<TransitionType, TransitionFunction> = {
 
     // Incoming with slight zoom starting smaller
     const inScale = 0.95 + progress * 0.05;
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.scale(inScale, inScale);
+    ctx.globalAlpha = progress;
+    ctx.translate(-width / 2, -height / 2);
+    ctx.drawImage(incomingCanvas, 0, 0);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  },
+
+  none: ({ incomingSlide, layouts, renderer }) => {
+    const canvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
+    renderer.getContext().drawImage(canvas, 0, 0);
+  },
+
+  rotate: ({
+    ctx,
+    height,
+    incomingSlide,
+    layouts,
+    outgoingSlide,
+    progress,
+    renderer,
+    width,
+  }) => {
+    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
+    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
+
+    // Clear
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, width, height);
+
+    // Outgoing rotates out
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((-progress * Math.PI) / 4);
+    ctx.globalAlpha = 1 - progress;
+    ctx.translate(-width / 2, -height / 2);
+    ctx.drawImage(outgoingCanvas, 0, 0);
+    ctx.restore();
+
+    // Incoming rotates in
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate(((1 - progress) * Math.PI) / 4);
+    ctx.globalAlpha = progress;
+    ctx.translate(-width / 2, -height / 2);
+    ctx.drawImage(incomingCanvas, 0, 0);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  },
+
+  slide: ({
+    ctx,
+    height,
+    incomingSlide,
+    layouts,
+    outgoingSlide,
+    progress,
+    renderer,
+    width,
+  }) => {
+    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
+    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
+
+    // Clear
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, width, height);
+
+    // Outgoing slides left
+    ctx.drawImage(outgoingCanvas, -width * progress, 0);
+
+    // Incoming slides in from right
+    ctx.drawImage(incomingCanvas, width * (1 - progress), 0);
+  },
+
+  zoom: ({
+    ctx,
+    height,
+    incomingSlide,
+    layouts,
+    outgoingSlide,
+    progress,
+    renderer,
+    width,
+  }) => {
+    const outgoingCanvas = renderer.renderSlideToCanvas(outgoingSlide, layouts);
+    const incomingCanvas = renderer.renderSlideToCanvas(incomingSlide, layouts);
+
+    // Clear
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, width, height);
+
+    // Outgoing zooms out and fades
+    const outScale = 1 + progress * 0.2;
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.scale(outScale, outScale);
+    ctx.globalAlpha = 1 - progress;
+    ctx.translate(-width / 2, -height / 2);
+    ctx.drawImage(outgoingCanvas, 0, 0);
+    ctx.restore();
+
+    // Incoming zooms in and fades in
+    const inScale = 0.8 + progress * 0.2;
     ctx.save();
     ctx.translate(width / 2, height / 2);
     ctx.scale(inScale, inScale);

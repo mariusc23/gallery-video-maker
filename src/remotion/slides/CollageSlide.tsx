@@ -1,8 +1,10 @@
 import { AbsoluteFill, Img } from "remotion";
+
 import type { Slide } from "@/types";
-import { useGalleryStore } from "@/store/useGalleryStore";
+
 import { COLLAGE_LAYOUTS } from "@/data/layouts";
-import { getSlotCropConfig, getCropStyles } from "@/utils/cropUtils";
+import { useGalleryStore } from "@/store/useGalleryStore";
+import { getCropStyles, getSlotCropConfig } from "@/utils/cropUtils";
 
 interface CollageSlideProps {
   slide: Slide;
@@ -16,11 +18,11 @@ export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {
     return (
       <AbsoluteFill
         style={{
-          backgroundColor: "#000",
-          display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          backgroundColor: "#000",
           color: "#fff",
+          display: "flex",
+          justifyContent: "center",
         }}
       >
         Layout not found
@@ -39,17 +41,17 @@ export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {
             <div
               key={slot.id}
               style={{
-                position: "absolute",
+                alignItems: "center",
+                backgroundColor: "#333",
+                color: "#666",
+                display: "flex",
+                fontSize: 24,
+                height: `${slot.height}%`,
+                justifyContent: "center",
                 left: `${slot.x}%`,
+                position: "absolute",
                 top: `${slot.y}%`,
                 width: `${slot.width}%`,
-                height: `${slot.height}%`,
-                backgroundColor: "#333",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#666",
-                fontSize: 24,
               }}
             >
               No photo
@@ -64,14 +66,14 @@ export const CollageSlide: React.FC<CollageSlideProps> = ({ slide }) => {
           <div
             key={slot.id}
             style={{
-              position: "absolute",
+              backgroundColor: "#000",
+              height: `${slot.height}%`,
               left: `${slot.x}%`,
+              overflow: "hidden",
+              position: "absolute",
               top: `${slot.y}%`,
               width: `${slot.width}%`,
-              height: `${slot.height}%`,
-              overflow: "hidden",
               zIndex: slot.zIndex || 0,
-              backgroundColor: "#000",
             }}
           >
             <Img src={photo.url} style={cropStyles} />

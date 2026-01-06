@@ -1,5 +1,7 @@
 import { AbsoluteFill, Img } from "remotion";
+
 import type { Slide } from "@/types";
+
 import { useGalleryStore } from "@/store/useGalleryStore";
 
 interface SinglePhotoSlideProps {
@@ -17,11 +19,11 @@ export const SinglePhotoSlide: React.FC<SinglePhotoSlideProps> = ({
     return (
       <AbsoluteFill
         style={{
-          backgroundColor: "#000",
-          display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          backgroundColor: "#000",
           color: "#fff",
+          display: "flex",
+          justifyContent: "center",
         }}
       >
         Photo not found
@@ -32,18 +34,18 @@ export const SinglePhotoSlide: React.FC<SinglePhotoSlideProps> = ({
   return (
     <AbsoluteFill
       style={{
+        alignItems: "center",
         backgroundColor: "#000",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
       }}
     >
       <Img
         src={photo.url}
         style={{
-          width: "100%",
           height: "100%",
           objectFit: "contain",
+          width: "100%",
         }}
       />
     </AbsoluteFill>

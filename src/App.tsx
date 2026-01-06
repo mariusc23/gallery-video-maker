@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Navbar } from "@/components/Navbar";
-import { MainLayout } from "@/components/Layout/MainLayout";
-import { TimelineSidebar } from "@/components/Timeline/TimelineSidebar";
+
 import { SlideEditor } from "@/components/Editor/SlideEditor";
-import { PreviewPanel } from "@/components/Preview/PreviewPanel";
-import { MediaLibraryDialog } from "@/components/MediaLibrary/MediaLibraryDialog";
 import { ExportDialog } from "@/components/Export/ExportDialog";
+import { MainLayout } from "@/components/Layout/MainLayout";
+import { MediaLibraryDialog } from "@/components/MediaLibrary/MediaLibraryDialog";
+import { Navbar } from "@/components/Navbar";
+import { PreviewPanel } from "@/components/Preview/PreviewPanel";
+import { TimelineSidebar } from "@/components/Timeline/TimelineSidebar";
 
 function App() {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
@@ -31,26 +32,26 @@ function App() {
   return (
     <div className="flex h-screen flex-col">
       <Navbar
-        onOpenMediaLibrary={handleOpenMediaLibrary}
         onExport={handleExport}
+        onOpenMediaLibrary={handleOpenMediaLibrary}
       />
       <MainLayout
+        editor={<SlideEditor />}
+        preview={<PreviewPanel />}
         timeline={
           <TimelineSidebar
             onOpenMediaLibraryWithPhotos={handleOpenMediaLibraryWithPhotos}
           />
         }
-        editor={<SlideEditor />}
-        preview={<PreviewPanel />}
       />
       <MediaLibraryDialog
-        open={isMediaLibraryOpen}
-        onOpenChange={setIsMediaLibraryOpen}
         initialSelectedPhotoIds={initialSelectedPhotoIds}
+        onOpenChange={setIsMediaLibraryOpen}
+        open={isMediaLibraryOpen}
       />
       <ExportDialog
-        open={isExportDialogOpen}
         onOpenChange={setIsExportDialogOpen}
+        open={isExportDialogOpen}
       />
     </div>
   );
