@@ -1,10 +1,21 @@
+import { useEffect, useRef } from 'react';
 import { Player } from '@remotion/player';
+import type { PlayerRef } from '@remotion/player';
 import { useGalleryStore } from '@/store/useGalleryStore';
 import { VideoComposition } from '@/remotion/VideoComposition';
 
 export function PreviewPanel() {
   const slides = useGalleryStore((state) => state.slides);
   const totalDuration = useGalleryStore((state) => state.getTotalDuration());
+  const playheadFrame = useGalleryStore((state) => state.playheadFrame);
+  const playerRef = useRef<PlayerRef>(null);
+
+  // Seek the player when playhead changes from timeline
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(playheadFrame);
+    }
+  }, [playheadFrame]);
 
   return (
     <div className="p-4 h-full flex flex-col">
@@ -24,6 +35,7 @@ export function PreviewPanel() {
           </div>
         ) : (
           <Player
+            ref={playerRef}
             component={VideoComposition}
             durationInFrames={totalDuration || 90}
             compositionWidth={1920}

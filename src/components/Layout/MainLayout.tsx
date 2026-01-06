@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 interface MainLayoutProps {
   timeline: ReactNode;
@@ -14,15 +14,13 @@ export function MainLayout({ timeline, editor, preview }: MainLayoutProps) {
         {timeline}
       </div>
 
-      {/* Editor - Center */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Editor - Right */}
+      <div className="w-96 border-r bg-muted/30 overflow-y-auto flex-shrink-0">
         {editor}
       </div>
 
-      {/* Preview - Right */}
-      <div className="w-96 border-l bg-muted/30 overflow-y-auto flex-shrink-0">
-        {preview}
-      </div>
+      {/* Preview - Center */}
+      <div className="flex-1 overflow-y-auto">{preview}</div>
     </div>
   );
 }

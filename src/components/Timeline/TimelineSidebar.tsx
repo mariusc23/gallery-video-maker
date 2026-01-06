@@ -6,10 +6,21 @@ export function TimelineSidebar() {
   const currentSlideId = useGalleryStore((state) => state.currentSlideId);
   const selectedSlideIds = useGalleryStore((state) => state.selectedSlideIds);
   const selectSlide = useGalleryStore((state) => state.selectSlide);
+  const setPlayheadFrame = useGalleryStore((state) => state.setPlayheadFrame);
 
   const handleSlideClick = (slideId: string, event: React.MouseEvent) => {
     const isMultiSelect = event.metaKey || event.ctrlKey;
     selectSlide(slideId, isMultiSelect);
+
+    // Calculate the start frame of the clicked slide and seek to it
+    const slideIndex = slides.findIndex((s) => s.id === slideId);
+    if (slideIndex !== -1) {
+      let startFrame = 0;
+      for (let i = 0; i < slideIndex; i++) {
+        startFrame += slides[i].duration;
+      }
+      setPlayheadFrame(startFrame);
+    }
   };
 
   return (
