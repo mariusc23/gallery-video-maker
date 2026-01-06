@@ -33,6 +33,26 @@ export const COLLAGE_LAYOUTS: CollageLayout[] = [
       { id: '2', x: 0, y: 50, width: 100, height: 50 },
     ],
   },
+  {
+    id: 'side-by-side-large-left',
+    name: 'Side by Side (Large Left)',
+    photoCount: 2,
+    aspectRatio: 16 / 9,
+    slots: [
+      { id: '1', x: 0, y: 0, width: 66.67, height: 100 },
+      { id: '2', x: 66.67, y: 0, width: 33.33, height: 100 },
+    ],
+  },
+  {
+    id: 'side-by-side-large-right',
+    name: 'Side by Side (Large Right)',
+    photoCount: 2,
+    aspectRatio: 16 / 9,
+    slots: [
+      { id: '1', x: 0, y: 0, width: 33.33, height: 100 },
+      { id: '2', x: 33.33, y: 0, width: 66.67, height: 100 },
+    ],
+  },
 
   // 3 photos
   {
